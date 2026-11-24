@@ -1,0 +1,26 @@
+{
+  "name": "@walak-dev/ruta",
+  "version": "0.1.0",
+  "description": "Think-first model routing. Before a token is spent, Ruta decides the cheapest path that will work: no AI, cached, small or frontier. Risk-aware, explainable, budget-first, open source.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./adapters": { "types": "./dist/adapters/index.d.ts", "import": "./dist/adapters/index.js" }
+  },
+  "bin": { "ruta": "dist/cli.js" },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/test/*.test.js",
+    "bundle": "node scripts/bundle.mjs"
+  },
+  "keywords": ["llm", "router", "model-routing", "ai-cost", "openrouter", "bedrock", "anthropic", "agents", "mcp", "lovable"],
+  "license": "Apache-2.0",
+  "engines": { "node": ">=18" },
+  "repository": { "type": "git", "url": "https://github.com/walak-dev/ruta.git" },
+  "peerDependencies": { "@aws-sdk/client-bedrock-runtime": ">=3" },
+  "peerDependenciesMeta": { "@aws-sdk/client-bedrock-runtime": { "optional": true } },
+  "devDependencies": { "@types/node": "^22.10.0", "esbuild": "^0.24.0", "typescript": "^5.7.0" }
+}

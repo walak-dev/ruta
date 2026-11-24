@@ -1,0 +1,10 @@
+{
+  "name": "ruta-mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server for Ruta: ask 'which model should do this, and what will it cost?' from Claude Desktop, Claude Code or any MCP client.",
+  "type": "module",
+  "bin": { "ruta-mcp-server": "dist/ruta-mcp-server.mjs" },
+  "scripts": { "build": "esbuild src/server.ts --bundle --platform=node --format=esm --target=node18 --outfile=dist/ruta-mcp-server.mjs --banner:js=\"#!/usr/bin/env node\"" },
+  "license": "Apache-2.0",
+  "dependencies": { "@modelcontextprotocol/sdk": "^1.12.0", "zod": "^3.23.8" }
+}
