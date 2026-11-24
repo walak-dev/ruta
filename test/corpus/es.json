@@ -1,0 +1,541 @@
+[
+  {
+    "text": "mandale 50 dolares a mi mama xfa",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "transfiere 20 usd a carlos.perez@example.com",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quiero enviar cien pesos a Yusleidy",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "pásale 200 a juan porfa",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "necesito mandar 30 dólares al +53 5 555 0101",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "che transferí 3000 pesos a sofi.rios@example.com porfa",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "envia veinte dolares a mi hermano Yoel, su cel es 555-0142",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "kiero mandar 25 usd a cuba a nombre de Maritza Lopez",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "mándale 300 bolivianos a don Hilario",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "hazle una transferencia de 150 soles a Rosa Quispe",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "pasale 80 mil guaranies a Derlis q le debo",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "envíale 500 lempiras a Wilmer al 5555-0199",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "Quiero transferir cincuenta dólares a la cuenta de marta.gomez@example.com",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "trasfiere 15 a lupita ya xfa",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quiero pagar la factura de la luz, son 350 pesos",
+    "lang": "es",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "necesito retirar 200 dólares de mi billetera",
+    "lang": "es",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "págale 45 soles a la señora Julia de la tienda",
+    "lang": "es",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quiero sacar 100 de mi saldo en efectivo",
+    "lang": "es",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "deposita 500 bolivianos a mi billetera",
+    "lang": "es",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quiero agregar fondos a mi cuenta, 20 usd",
+    "lang": "es",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "paga mi recibo de internet de 30 dolares xfa",
+    "lang": "es",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "Necesito hacer un retiro de mil quinientos pesos",
+    "lang": "es",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "recarga 500 cup al 5 555 0123",
+    "lang": "es",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "recarga cubacel de 20 usd para el +53 5 555 0188",
+    "lang": "es",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "recargame el celular con 20 pesos",
+    "lang": "es",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "ponle saldo al 5555-0177, 50 lempiras",
+    "lang": "es",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "necesito recargar mi numero 7555 0101 con 30 bs",
+    "lang": "es",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "una recarga de 5 mil guaranies al 0981 555 012 xfa",
+    "lang": "es",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "kiero recargar 10 soles al 955 550 111",
+    "lang": "es",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "cargale crédito al 11 5555 0163, 200 pesos",
+    "lang": "es",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "dime mi saldo y pásale 50 a Yanet",
+    "lang": "es",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "hola buenas, quiero mandar 100 dólares a mi mamá en Holguín",
+    "lang": "es",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ya llegó mi recarga? y de paso paga la luz, 400 pesos",
+    "lang": "es",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "cuanto tengo en la billetera? si alcanza transfiere 30 a luis@example.com",
+    "lang": "es",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "gracias por lo de ayer, ahora mandale 20 usd a Dayana",
+    "lang": "es",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "Buenas tardes me dice mi saldo y también quiero retirar 200 bolivianos",
+    "lang": "es",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "recárgame 10 al 555 0199 y transfiere 25 dólares a rosa.m@example.com",
+    "lang": "es",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "saldo xfa. y pagale 80 soles a don Tito",
+    "lang": "es",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "cuál es mi saldo?",
+    "lang": "es",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "mi saldo xfa",
+    "lang": "es",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "cuanto tengo en mi billetera",
+    "lang": "es",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "saldo",
+    "lang": "es",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "me dices mi saldo por favor",
+    "lang": "es",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "ya llegó mi recarga?",
+    "lang": "es",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "llego la transferencia?",
+    "lang": "es",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "como va mi pedido",
+    "lang": "es",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "estado de mi envío xfa",
+    "lang": "es",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "Quisiera saber si ya llegó la recarga que hice esta mañana",
+    "lang": "es",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "hola",
+    "lang": "es",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "buenas tardes",
+    "lang": "es",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "buen dia",
+    "lang": "es",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "holaa q tal",
+    "lang": "es",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "gracias",
+    "lang": "es",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "muchas gracias!!",
+    "lang": "es",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "mil grasias mi hermano",
+    "lang": "es",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "cuánto cuesta enviar dinero a Cuba?",
+    "lang": "es",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "que comision cobran por transferir",
+    "lang": "es",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "cómo funciona lo de las recargas?",
+    "lang": "es",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "cual es el minimo para retirar",
+    "lang": "es",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "a cómo está el dólar hoy?",
+    "lang": "es",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "cuanto se demora en llegar una transferencia a Honduras",
+    "lang": "es",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "mándale saludos a Ana de mi parte",
+    "lang": "es",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "mandame el catalogo xfa",
+    "lang": "es",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "pásame el menú",
+    "lang": "es",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "me transfieres con un humano?",
+    "lang": "es",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "envíame la ubicación de la tienda",
+    "lang": "es",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "mandale un abrazo a tu equipo, muy buena atencion",
+    "lang": "es",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "pasame el link para registrarme",
+    "lang": "es",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "mi correo es laura.diaz@example.com",
+    "lang": "es",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "llámame al 555-0123",
+    "lang": "es",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "cambie de telefono, mi numero nuevo es +52 55 5555 0147",
+    "lang": "es",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "escribanme a pedro.ramos@example.com para lo del registro",
+    "lang": "es",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "a qué hora abren mañana?",
+    "lang": "es",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "como me registro",
+    "lang": "es",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "el servicio de ayer fue pésimo, nadie me contestó",
+    "lang": "es",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "tienen sucursal en Santa Cruz?",
+    "lang": "es",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "atienden los domingos tb?",
+    "lang": "es",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  }
+]

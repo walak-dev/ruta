@@ -1,0 +1,541 @@
+[
+  {
+    "text": "envoie 50 euros a Fatou stp",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "je veux envoyer 20000 fcfa à mon frère Moussa",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "transfere 100 dollars a jean.pierre@example.com",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "fais un virement de 75€ à Aminata",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "envoi 30 a marie@example.com",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "je voudrais envoyer cinquante euros à ma mère en Haïti",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "tu peux transferer 15000 francs sur le +221 70 000 00 00",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "envoie dix mille francs a Kofi",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "virement de 200 euros vers claire.dubois@example.com svp",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "jveux envoyer 40 dollars a Wideline a Port au Prince",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "transfert de 25 usd au +509 0000 0000",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "vire 35 euros a Lucas stp",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "envoie 60 balles a Karim",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "envoie 20 à Sandrine",
+    "lang": "fr",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "je veux payer ma facture d'electricite, 45 euros",
+    "lang": "fr",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "paye ma facture d'eau de 12000 fcfa stp",
+    "lang": "fr",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "je voudrais retirer 100 euros de mon portefeuille",
+    "lang": "fr",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "retrait de 50000 francs svp",
+    "lang": "fr",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "je veux deposer 200 euros sur mon wallet",
+    "lang": "fr",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ajoute 30 dollars a mon compte",
+    "lang": "fr",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "paie 80 euros au proprio pour le loyer",
+    "lang": "fr",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "je veux alimenter mon compte de 10000 fcfa",
+    "lang": "fr",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "recharge 5 euros sur le 06 00 00 00 00",
+    "lang": "fr",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "je veux une recharge de 1000 fcfa pour le +225 01 00 00 00 00",
+    "lang": "fr",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "recharge mon numero stp 10 euros",
+    "lang": "fr",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "mets 2000 francs de credit sur le 70 000 00 00",
+    "lang": "fr",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "recharge telephone 20 dollars pour le +509 0000 0000",
+    "lang": "fr",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "je voudrais recharger le portable de ma soeur +221 70 000 00 00 avec 500 fcfa",
+    "lang": "fr",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "une recharge de dix euros sur mon numéro svp",
+    "lang": "fr",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "rechargez le 07 00 00 00 00 avec 15€",
+    "lang": "fr",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "c'est quoi mon solde ? et envoie 20 euros à Awa",
+    "lang": "fr",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "bonjour, je veux envoyer 100 dollars à ma tante Rose",
+    "lang": "fr",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "mon transfert d'hier est arrivé ? et paye aussi ma facture d'eau, 8000 fcfa",
+    "lang": "fr",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "donne moi mon solde et transfere tout a paul@example.com",
+    "lang": "fr",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "slt, recharge le 06 00 00 00 00 de 10 euros et dis moi combien il me reste",
+    "lang": "fr",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "merci pour hier. maintenant envoie 50 euros a Mamadou",
+    "lang": "fr",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "est ce que ma recharge est passée ? je veux aussi retirer 40 euros",
+    "lang": "fr",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "bonsoir, quel est mon solde et peux tu virer 300 euros à Élodie",
+    "lang": "fr",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "mon solde svp",
+    "lang": "fr",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "c'est quoi mon solde",
+    "lang": "fr",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "il me reste combien sur mon compte ?",
+    "lang": "fr",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "quel est le solde de mon portefeuille",
+    "lang": "fr",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "je veux voir mon solde",
+    "lang": "fr",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "ma recharge est arrivée ?",
+    "lang": "fr",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "est ce que mon transfert est bien passé",
+    "lang": "fr",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "ou en est ma commande",
+    "lang": "fr",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "le virement d'hier est arrivé ou pas encore ?",
+    "lang": "fr",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "statut de mon transfert svp",
+    "lang": "fr",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "bonjour",
+    "lang": "fr",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "bjr",
+    "lang": "fr",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "salut ça va ?",
+    "lang": "fr",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "bonsoir",
+    "lang": "fr",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "merci beaucoup",
+    "lang": "fr",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "mrc bcp",
+    "lang": "fr",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "merci c'est gentil",
+    "lang": "fr",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "ca coute combien d'envoyer de l'argent a Cuba ?",
+    "lang": "fr",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "c'est quoi les frais pour un transfert vers le Sénégal",
+    "lang": "fr",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "comment ça marche pour envoyer de l'argent en Haïti ?",
+    "lang": "fr",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "quel est le taux de change euro fcfa aujourd'hui",
+    "lang": "fr",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "y a un montant maximum pour les transferts ?",
+    "lang": "fr",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "combien de temps ça prend un virement vers le Mali",
+    "lang": "fr",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "envoie le bonjour à Ana de ma part",
+    "lang": "fr",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "envoyez moi le catalogue svp",
+    "lang": "fr",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "passe moi le menu stp",
+    "lang": "fr",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "transfere moi a un conseiller humain",
+    "lang": "fr",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "tu peux m'envoyer le lien pour telecharger l'appli ?",
+    "lang": "fr",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "j'ai rechargé la page mais ça marche toujours pas",
+    "lang": "fr",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "retirez moi de votre liste de diffusion svp",
+    "lang": "fr",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "mon email c'est sophie.martin@example.com",
+    "lang": "fr",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "appelez moi au 06 00 00 00 00",
+    "lang": "fr",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "j'ai changé de numero, le nouveau c'est +221 70 000 00 00",
+    "lang": "fr",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "vous pouvez m'ecrire à koffi@example.com pour la suite",
+    "lang": "fr",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "vous êtes ouverts le dimanche ?",
+    "lang": "fr",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "comment je fais pour m'inscrire",
+    "lang": "fr",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "l'appli plante tout le temps c'est penible",
+    "lang": "fr",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "c'est quoi vos horaires",
+    "lang": "fr",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "vous avez une agence a Abidjan ?",
+    "lang": "fr",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  }
+]

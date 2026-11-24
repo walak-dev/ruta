@@ -1,0 +1,541 @@
+[
+  {
+    "text": "manda 50 reais pra Ana",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "faz um pix de 100 pra joao.silva@example.com",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "transfere 200 pro Carlos por favor",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quero enviar 30 dolares pra minha mae, o numero dela é +55 11 90000-0001",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "preciso mandar cinquenta reais pra Bia agora",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "envia 25 USD para marina@example.com",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "pode transferir 150 pra conta do Pedro?",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "manda um pix de vinte reais pro Lucas",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quero fazer uma transferência de R$ 80,00 para o Rafael",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "passa 40 conto pro Thiago ai",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "transfere cem dólares pra carla.souza@example.com",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "faz um pix de 15 pra chave (11) 90000-0002",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "vc consegue enviar 300 reais pra minha irma Juliana hj?",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "envia duzentos pra Fernanda, o pix dela é fernanda@example.com",
+    "lang": "pt",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quero pagar meu boleto de 120 reais",
+    "lang": "pt",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "preciso sacar 200 da carteira",
+    "lang": "pt",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "paga a conta de luz pra mim, deu 89,90",
+    "lang": "pt",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quero depositar 50 reais na minha carteira",
+    "lang": "pt",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quero adicionar 100 reais de saldo na carteira digital",
+    "lang": "pt",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quero fazer um saque de quinhentos reais",
+    "lang": "pt",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "paga 35 pro Marcos q to devendo pra ele",
+    "lang": "pt",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quero retirar todo meu dinheiro pro meu banco",
+    "lang": "pt",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "quero fazer uma recarga de 20 reais pro numero (11) 90000-0003",
+    "lang": "pt",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "recarga de 15 pro meu celular",
+    "lang": "pt",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "coloca 30 de credito no 21 90000-0004",
+    "lang": "pt",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "preciso recarregar meu celular, 10 reais",
+    "lang": "pt",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "faz uma recarga de 50 pro numero +55 31 90000-0005",
+    "lang": "pt",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "quero colocar crédito no celular da minha mae 11900000006",
+    "lang": "pt",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "recarrega 25 no meu numero pfv",
+    "lang": "pt",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "queria uma recarga de celular de vinte reais",
+    "lang": "pt",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "qual meu saldo? e transfere 50 pra Ana",
+    "lang": "pt",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "oi bom dia, manda 100 reais pro Joao pfv",
+    "lang": "pt",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "minha recarga ja caiu? aproveita e paga meu boleto de 60",
+    "lang": "pt",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "me ve meu saldo e depois faz um pix de 30 pra bruno@example.com",
+    "lang": "pt",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "boa tarde! quero sacar 200 e tb saber q horas vcs fecham",
+    "lang": "pt",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "obrigado pela ajuda, agora manda 20 pra Camila",
+    "lang": "pt",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "meu saldo, e transfere tudo pra juliana@example.com",
+    "lang": "pt",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "o pedido 4521 ja chegou? e faz uma recarga de 15 pro 11 90000-0007",
+    "lang": "pt",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "qual é meu saldo?",
+    "lang": "pt",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "qto eu tenho na carteira?",
+    "lang": "pt",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "meu saldo pfv",
+    "lang": "pt",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "queria consultar meu saldo",
+    "lang": "pt",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "saldo",
+    "lang": "pt",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "minha recarga ja caiu?",
+    "lang": "pt",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "a transferencia ja chegou?",
+    "lang": "pt",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "cade meu pedido?",
+    "lang": "pt",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "qual o status da minha recarga?",
+    "lang": "pt",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "o pix q eu fiz hj ja foi?",
+    "lang": "pt",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "oi",
+    "lang": "pt",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "bom dia!",
+    "lang": "pt",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "boa tarde, tudo bem?",
+    "lang": "pt",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "opa, boa noite",
+    "lang": "pt",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "obrigado!",
+    "lang": "pt",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "valeu, muito obrigada",
+    "lang": "pt",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "brigadão, ajudou mto",
+    "lang": "pt",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "quanto custa pra enviar dinheiro pra Cuba?",
+    "lang": "pt",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "qual a taxa pra fazer transferencia?",
+    "lang": "pt",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "como funciona a recarga de celular?",
+    "lang": "pt",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "tem limite pra sacar por dia?",
+    "lang": "pt",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "da pra pagar boleto por aqui?",
+    "lang": "pt",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "quanto tempo demora pra cair um pix?",
+    "lang": "pt",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "manda um abraço pra Ana",
+    "lang": "pt",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "me manda o catalogo pfv",
+    "lang": "pt",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "passa o cardapio ai",
+    "lang": "pt",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "me transfere pra um atendente humano",
+    "lang": "pt",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "envia a foto do produto pra mim",
+    "lang": "pt",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "pode me mandar o endereço da loja?",
+    "lang": "pt",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "passa meu recado pra dona Marta q eu ligo depois",
+    "lang": "pt",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "meu email é paula.lima@example.com",
+    "lang": "pt",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "me liga no (11) 90000-0008",
+    "lang": "pt",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "atualiza meu cadastro, meu numero novo é 21 90000-0009",
+    "lang": "pt",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "pode mandar o comprovante pro meu email? roberto@example.com",
+    "lang": "pt",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "q horas vcs abrem amanha?",
+    "lang": "pt",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "como faço pra me cadastrar?",
+    "lang": "pt",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "o app ta travando toda hora, ja é a terceira vez q reclamo",
+    "lang": "pt",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "vcs atendem no sabado?",
+    "lang": "pt",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "pessimo atendimento, to esperando resposta faz duas horas",
+    "lang": "pt",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  }
+]

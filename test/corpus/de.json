@@ -1,0 +1,541 @@
+[
+  {
+    "text": "kannst du bitte 50 euro an anna schicken",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "Überweise 20 Euro an jonas.keller@example.com",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "schick 30 € an +49 151 00000000",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ich moechte 100 euro an meinen bruder tobias ueberweisen",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "bitte fünfzig euro an lena senden",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "sende 25 an max",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ich will 200 USD an miriam.vogt@example.com transferieren",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "überweis mal 15 euro an die nummer 0170 0000000",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "zwanzig euro an paul schicken bitte",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ich will geld an meinen freund daniel senden",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "schick meiner schwester clara bitte hundert euro",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ich muss dringend 300 an +49 160 5550123 senden",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "möchte 150 Euro nach Kuba an meine Mutter schicken",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "mach bitte ne überweisung über 45 euro an timo",
+    "lang": "de",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ich möchte meine stromrechnung bezahlen, 85 euro",
+    "lang": "de",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ich will 100 euro abheben",
+    "lang": "de",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ich will mein wallet mit 50 euro aufladen",
+    "lang": "de",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "bitte 200 euro auf mein wallet einzahlen",
+    "lang": "de",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "bezahl bitte meine handyrechnung, 29,99 euro",
+    "lang": "de",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "zahle 60 euro an herrn brandt",
+    "lang": "de",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "bitte mein ganzes guthaben auszahlen",
+    "lang": "de",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "bezahle die gasrechnung ueber 72 euro",
+    "lang": "de",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "handy aufladen 15 euro für 0151 00000000",
+    "lang": "de",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "Bitte lade die Nummer +49 170 0000000 mit 10 Euro auf",
+    "lang": "de",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "ich möchte mein prepaid guthaben aufladen, 20 €",
+    "lang": "de",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "aufladung 10 euro fuer +53 5 0000000",
+    "lang": "de",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "kannst du mein handy mit 25 euro aufladen?",
+    "lang": "de",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "prepaid aufladen 0160 5550199 15€",
+    "lang": "de",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "Handyguthaben aufladen bitte, 30 Euro auf die 0171 0000000",
+    "lang": "de",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "lad bitte das handy von meiner mutter auf, nummer +53 50000000, 20 euro",
+    "lang": "de",
+    "category": "topup_request",
+    "moneyAction": true,
+    "instantOk": true
+  },
+  {
+    "text": "wie viel guthaben hab ich noch? und überweise bitte 20 euro an anna",
+    "lang": "de",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "hallo, schick bitte 50 euro an markus.lang@example.com",
+    "lang": "de",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "ist meine aufladung von gestern angekommen? und bitte zahl noch die stromrechnung, 60 euro",
+    "lang": "de",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "mein kontostand bitte, und dann alles an jonas@example.com überweisen",
+    "lang": "de",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "guten morgen, ich möchte 100 euro abheben",
+    "lang": "de",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "danke für die hilfe! kannst du jetzt noch 30 euro an lea senden?",
+    "lang": "de",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "wo ist meine bestellung? und lade bitte 0151 00000000 mit 10 euro auf",
+    "lang": "de",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "zeig mir mein guthaben und sende 15 € an +49 160 5550123",
+    "lang": "de",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "wie ist mein kontostand?",
+    "lang": "de",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "mein guthaben bitte",
+    "lang": "de",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "wieviel geld hab ich noch im wallet",
+    "lang": "de",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "kontostand",
+    "lang": "de",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "kannst du mir mein guthaben anzeigen?",
+    "lang": "de",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "ist meine aufladung angekommen?",
+    "lang": "de",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "wo bleibt meine überweisung?",
+    "lang": "de",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "status meiner bestellung bitte",
+    "lang": "de",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "ist das geld schon angekommen?",
+    "lang": "de",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "wurde meine ueberweisung von gestern schon ausgefuehrt?",
+    "lang": "de",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "hallo",
+    "lang": "de",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "Guten Morgen",
+    "lang": "de",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "hi, wie gehts?",
+    "lang": "de",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "moin zusammen",
+    "lang": "de",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "danke",
+    "lang": "de",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "vielen dank für die hilfe!",
+    "lang": "de",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "super, dankeschön",
+    "lang": "de",
+    "category": "thanks",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "was kostet es geld nach kuba zu schicken?",
+    "lang": "de",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "wie funktioniert eine überweisung bei euch?",
+    "lang": "de",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "wie hoch sind die gebühren fürs aufladen?",
+    "lang": "de",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "wie lange dauert eine überweisung in die türkei?",
+    "lang": "de",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "gibt es ein limit pro tag für auszahlungen?",
+    "lang": "de",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "welche zahlungsmethoden akzeptiert ihr?",
+    "lang": "de",
+    "category": "money_info_question",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "schick anna bitte liebe grüße von mir",
+    "lang": "de",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "schick mir bitte den aktuellen katalog",
+    "lang": "de",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "kannst du mich bitte an einen echten mitarbeiter weiterleiten?",
+    "lang": "de",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "sende das foto bitte auch an lisa",
+    "lang": "de",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "mein akku ist fast leer, muss das handy erst aufladen. melde mich später",
+    "lang": "de",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "kannst du mir die rechnung vom letzten monat nochmal schicken?",
+    "lang": "de",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "kann ich meine nummer auf eine neue sim übertragen?",
+    "lang": "de",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "meine email ist petra.sommer@example.com",
+    "lang": "de",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "ruf mich bitte an unter 0151 00000000",
+    "lang": "de",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "meine neue handynummer ist +49 170 0000000, bitte im profil ändern",
+    "lang": "de",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "ihr könnt mir an k.neumann@example.com schreiben",
+    "lang": "de",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "wann habt ihr geöffnet?",
+    "lang": "de",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "wie kann ich mich bei euch registrieren?",
+    "lang": "de",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "die app stürzt bei mir ständig ab, das nervt echt",
+    "lang": "de",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "ich warte seit einer stunde auf eine antwort, das ist echt schlechter service",
+    "lang": "de",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "wo finde ich eure filiale in köln?",
+    "lang": "de",
+    "category": "other_chat",
+    "moneyAction": false,
+    "instantOk": false
+  }
+]

@@ -2,7 +2,7 @@
  * Ruta: think-first model routing. Shared types, zero runtime dependencies.
  * Runs in Node 18+, Deno, Bun, Cloudflare Workers, Supabase Edge and the browser.
  */
-export type Lang = "es" | "en" | "pt" | "fr" | "ht" | "other";
+export type Lang = "es" | "en" | "pt" | "fr" | "de" | "ht" | "other";
 export type Channel = "whatsapp" | "sms" | "web" | "app" | "studio" | "agent" | "api" | "cli";
 export type RiskClass = "money" | "auth_security" | "identity_kyc" | "legal_compliance" | "pii" | "none";
 export type TaskType =
