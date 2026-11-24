@@ -1,6 +1,9 @@
 import type { Channel, Lang, RiskClass, RouteRequest, TaskType, Triage } from "./types.js";
 import { type Masked } from "./text.js";
-/** Deterministic risk. The thinking step can never be talked out of it. */
+/**
+ * Deterministic risk. The thinking step can never be talked out of it.
+ * A routing hint, never a security control: callers must still gate money in their own code.
+ */
 export declare function riskOf(normalized: string, piiKinds?: string[], channel?: Channel): {
     risk: RiskClass;
     hits: RiskClass[];

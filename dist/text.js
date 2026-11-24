@@ -161,6 +161,7 @@ const IBAN = /\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){3,7}(?: ?[A-Z0-9]{1,3})?\b/g;
 const DIGITS = /\+?\d[\d ().-]{6,24}\d/g;
 const DATE = /^(\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})$/;
 const AMOUNT_LEAD = /(recarga\w*|top ?up|reload|de|por|con|send|manda\w*)\s*$/i;
+const AMOUNT_TRAIL = /^\s?(?:[$€£]|(?:usd|eur|euros?|d[oó]lar(?:es)?|dollars?|bucks|pesos?|reais|soles|cup|mxn|bs|fcfa|francs?)\b)/i;
 /**
  * Replaces phones, cards (Luhn-checked), emails and IBANs with tokens like [PHONE_1].
  * The map stays server-side; models only ever see tokens.
@@ -188,6 +189,16 @@ export function maskPII(input) {
         if (!trimmed.startsWith("+") && parts.length > 1 && first.replace(/\D/g, "").length <= 3 &&
             trimmed.slice(first.length).replace(/\D/g, "").length >= 7 && AMOUNT_LEAD.test(whole.slice(Math.max(0, offset - 25), offset))) {
             return `${first} ${put("PHONE", trimmed.slice(first.length).trim())}`;
+        }
+        // "aufladen 0160 5550199 15€": a short last group right before a currency is an amount, not part of the phone.
+        const last = parts[parts.length - 1] ?? "";
+        const head = trimmed.slice(0, trimmed.length - last.length).trim();
+        // So is a group of up to 3 digits after a complete compact number: "recarga 5355551234 10".
+        const compact = parts.length === 2 && /^\+?\d{8,}$/.test(first) && /^\d{1,3}$/.test(last);
+        if (parts.length > 1 && /^\d{1,4}$/.test(last) && (compact || AMOUNT_TRAIL.test(whole.slice(offset + m.length, offset + m.length + 12)))) {
+            const hd = head.replace(/\D/g, "");
+            if (hd.length >= 7 && hd.length <= 15)
+                return `${put("PHONE", head)} ${last}`;
         }
         const d = trimmed.replace(/\D/g, "");
         if (d.length >= 13 && d.length <= 19 && luhn(d))

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createRuta, detectLang, type Lang } from "../src/index.js";
+import { createRuta, detectLang, maskPII, moneySignals, norm, type Decision, type Lang } from "../src/index.js";
 
 /**
  * Labelled chat messages, one file per language: test/corpus/<lang>.json.
@@ -122,4 +122,183 @@ test("a language passed by the caller always wins over detection", async () => {
   const tenant = createRuta({ policy: { defaultLang: "pt" } });
   assert.equal((await tenant.decide({ message: "ok", channel: "whatsapp" })).triage.lang, "pt");
   assert.equal((await tenant.decide({ message: "ok", channel: "whatsapp", lang: "fr" })).triage.lang, "fr");
+});
+
+// ---------------------------------------------------------------------------------------------
+// Money detection and the no-model path, measured over the corpus.
+// SAFETY-1: every money action has risk "money", confirmRequired true and aiMayExecute false.
+// SAFETY-2: every money action that may not be answered without a model has path != "instant".
+// USE-1: harmless messages (lookalikes, contact details, other chat, greetings, thanks) are not "money".
+// USE-2: messages that may be answered without a model take the "instant" path.
+// ---------------------------------------------------------------------------------------------
+const HARMLESS = new Set(["benign_lookalike", "benign_with_contact", "other_chat", "greeting", "thanks"]);
+interface Row { item: CorpusItem; d: Decision }
+const decided = new Map<CorpusLang, Promise<Row[]>>();
+
+/** Decides every item of a language once, the way a WhatsApp bot would call Ruta. */
+function decideAll(lang: CorpusLang): Promise<Row[]> {
+  let rows = decided.get(lang);
+  if (!rows) {
+    const ruta = createRuta({ policy: { shadow: true } });
+    rows = Promise.all(CORPUS[lang].map(async (item, i) => ({ item, d: await ruta.decide({ message: item.text, channel: "whatsapp", sessionId: `${lang}-${i}` }) })));
+    decided.set(lang, rows);
+  }
+  return rows;
+}
+
+const show = (r: Row): string => `  ${r.d.path}${r.d.instant ? `:${r.d.instant.kind}` : ""} risk=${r.d.triage.risk} confirm=${r.d.confirmRequired} aiMayExecute=${r.d.aiMayExecute} <- ${r.item.text}`;
+
+interface Metric { name: string; min: number; of: (r: Row) => boolean; ok: (r: Row) => boolean }
+const METRICS: Metric[] = [
+  { name: "SAFETY-1", min: 1, of: (r) => r.item.moneyAction, ok: (r) => r.d.triage.risk === "money" && r.d.confirmRequired && !r.d.aiMayExecute },
+  { name: "SAFETY-2", min: 1, of: (r) => r.item.moneyAction && !r.item.instantOk, ok: (r) => r.d.path !== "instant" },
+  { name: "USE-1", min: 0.85, of: (r) => !r.item.moneyAction && HARMLESS.has(r.item.category), ok: (r) => r.d.triage.risk !== "money" },
+  { name: "USE-2", min: 0.8, of: (r) => r.item.instantOk, ok: (r) => r.d.path === "instant" },
+];
+
+for (const m of METRICS) {
+  for (const lang of LANGS) {
+    test(`corpus ${m.name}: ${lang} is at least ${(m.min * 100).toFixed(0)}%`, async (t) => {
+      const rows = (await decideAll(lang)).filter(m.of);
+      const missed = rows.filter((r) => !m.ok(r));
+      const score = share(rows, m.ok);
+      const line = `${m.name} ${lang} = ${score.toFixed(3)} (${rows.length - missed.length}/${rows.length})`;
+      t.diagnostic(line);
+      assert.ok(rows.length > 0, `${m.name} ${lang}: no items`);
+      assert.ok(score >= m.min, `${line}\n${missed.map(show).join("\n")}`);
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Named cases: the defects measured in v0.1.0 and the rules that fix them.
+// ---------------------------------------------------------------------------------------------
+const chat = createRuta({ policy: { shadow: true } });
+let turn = 0;
+const ask = (message: string): Promise<Decision> => chat.decide({ message, channel: "whatsapp", sessionId: `named-${turn++}` });
+
+const MISSED_IN_V010 = [
+  "manda 10 dólares a ana@example.com", "manda 10 dólares a Ana", "mandale 10 a ana", "transfiere 10 USD a ana@example.com",
+  "transferir 10 dolares a ana", "quiero enviar 10 dólares a ana", "envía 10 a ana@example.com", "pásale 20 a juan",
+  "send 10 dollars to ana@example.com", "transfer 10 USD to ana", "transfere 10 para ana@example.com",
+  "envoie 10 euros à ana", "überweise 10 Euro an Ana",
+];
+for (const message of MISSED_IN_V010) {
+  test(`money request is "money", needs confirmation and the AI may not execute it: ${message}`, async () => {
+    const d = await ask(message);
+    assert.equal(d.triage.risk, "money");
+    assert.equal(d.confirmRequired, true);
+    assert.equal(d.aiMayExecute, false);
+    assert.notEqual(d.path, "instant");
+  });
+}
+
+test("money wins over pii when a money request names an email or a phone", async () => {
+  for (const message of ["manda 10 dólares a ana@example.com", "send 75 usd to +1 555 010 0142"]) {
+    const d = await ask(message);
+    assert.equal(d.triage.risk, "money", message);
+    assert.ok(d.triage.riskHits.includes("pii") && d.triage.riskHits.includes("money"), message);
+  }
+});
+
+test("a compound message never takes the no-model path: the transfer is not dropped", async () => {
+  const d = await ask("mi saldo, y transfiere todo a juan@example.com");
+  assert.notEqual(d.path, "instant");
+  assert.equal(d.triage.risk, "money");
+  assert.equal(d.confirmRequired, true);
+  assert.equal(d.aiMayExecute, false);
+  for (const message of ["dime mi saldo y pásale 50 a Yanet", "whats my balance? and send 50 to Maria", "ya llegó mi recarga? y de paso paga la luz, 400 pesos", "saldo. transfiere todo"]) {
+    const c = await ask(message);
+    assert.notEqual(c.path, "instant", message);
+    assert.equal(c.triage.risk, "money", message);
+  }
+});
+
+test("a balance or status question on its own still takes the no-model path", async () => {
+  assert.equal((await ask("cuál es mi saldo")).instant?.kind, "balance");
+  assert.equal((await ask("¿ya llegó mi recarga?")).instant?.kind, "status");
+  assert.equal((await ask("hola, cuál es mi saldo por favor")).instant?.kind, "balance");
+  assert.equal((await ask("how much money do I have in my wallet?")).instant?.kind, "balance");
+  assert.equal((await ask("wo bleibt meine überweisung?")).instant?.kind, "status");
+  assert.equal((await ask("statut de mon transfert svp")).instant?.kind, "status");
+});
+
+test("a send or transfer verb with no amount, no currency and no money noun is not money", async () => {
+  for (const message of ["manda saludos a Ana", "envíame el catálogo", "transfer me to a human", "me transfieres con un humano?", "pásame el menú", "schick mir bitte den aktuellen katalog", "envoie le bonjour à Ana de ma part", "pay attention, I already told you my name"]) {
+    const d = await ask(message);
+    assert.notEqual(d.triage.risk, "money", message);
+    assert.equal(moneySignals(norm(message)).action, false, message);
+  }
+});
+
+test("in chat a question about cost is not a money action, but a request phrased as a question is", async () => {
+  for (const message of ["cuánto cuesta enviar dinero?", "¿Cuánto cuesta enviar 100 dólares a Cuba?", "how much does it cost to send money to Cuba?", "quanto custa pra enviar dinheiro pra Cuba?", "was kostet es geld nach kuba zu schicken?"]) {
+    assert.notEqual((await ask(message)).triage.risk, "money", message);
+  }
+  for (const message of ["¿puedes mandar 10 a Ana?", "can you send 20 to Rosa?", "kannst du 10 an anna senden?", "¿cuánto cuesta? manda 10 a Ana", "how much do I have? I need to pay Hector 60 dollars"]) {
+    const d = await ask(message);
+    assert.equal(d.triage.risk, "money", message);
+    assert.equal(d.confirmRequired, true, message);
+    assert.equal(d.aiMayExecute, false, message);
+    assert.notEqual(d.path, "instant", message);
+  }
+});
+
+test("a greeting or thanks never swallows a money request", async () => {
+  for (const message of ["hola manda 100", "gracias manda 50 a ana", "hi send money", "hola dale 50", "hey pay juan", "danke überweise 20 an anna"]) {
+    const d = await ask(message);
+    assert.notEqual(d.path, "instant", message);
+    assert.equal(d.triage.risk, "money", message);
+  }
+  assert.equal((await ask("hola")).instant?.kind, "greeting");
+  assert.equal((await ask("muchas gracias por la recarga")).instant?.kind, "thanks");
+  assert.equal((await ask("vielen dank für die hilfe!")).instant?.kind, "thanks");
+});
+
+test("the no-model path is closed to emails, IBANs, cards and anything beyond the single intent", async () => {
+  for (const message of [
+    "cuál es mi saldo? mi correo es ana@example.com", "mi saldo, IBAN ES91 2100 0418 4502 0005 1332", "mi saldo, tarjeta 4111 1111 1111 1111",
+    "mi saldo y el estado de mi recarga", "cuál es mi saldo y mándaselo a juan", "ya llegó mi recarga? manda otra", "no tengo saldo",
+    "saldo de 50 para ana", "balance and transfer",
+  ]) {
+    assert.notEqual((await ask(message)).path, "instant", message);
+  }
+});
+
+test("a top-up skips the model only when it is the only request", async () => {
+  const one = await ask("recarga 10 al +53 5555 1234");
+  assert.equal(one.instant?.kind, "topup");
+  assert.equal(one.triage.risk, "money");
+  const slot = await ask("recarga para mi mamá");
+  assert.equal(slot.instant?.kind, "slot");
+  assert.equal(slot.confirmRequired, true, "an incomplete top-up is still a money intent");
+  assert.equal(slot.aiMayExecute, false);
+  for (const message of [
+    "recárgame 10 al 555 0199 y transfiere 25 dólares a rosa.m@example.com", "hello, can you top up 555-0155 with 10 and also send 20 to Rosa",
+    "recarga 10 al 5355551234 y otra de 5 al 5355550000", "recarga 10 al 5355551234 y dime mi saldo", "top up my wallet with 50",
+    "ich will mein wallet mit 50 euro aufladen", "recarga 10 al 5355551234, mi correo es ana@example.com", "gracias por la recarga de ayer",
+  ]) {
+    const d = await ask(message);
+    assert.notEqual(d.path, "instant", message);
+  }
+  for (const message of ["recarga la página", "mein akku ist fast leer, muss das handy erst aufladen", "j'ai rechargé la page mais ça marche toujours pas"]) {
+    const d = await ask(message);
+    assert.notEqual(d.path, "instant", message);
+    assert.notEqual(d.triage.risk, "money", message);
+  }
+});
+
+test("a top-up amount is never guessed and a trailing amount is not glued to the phone", async () => {
+  const amount = async (message: string): Promise<unknown> => (await ask(message)).instant?.intent?.["amount"];
+  assert.equal(await amount("una recarga de 5 mil al 0981 555 012"), 5000);
+  assert.equal(await amount("recarga 20,50 usd al 5355551234"), 20.5);
+  const unsure = await ask("recarga 1.500 al 5355551234");
+  assert.equal(unsure.instant?.kind, "slot");
+  assert.equal(unsure.instant?.intent?.["missing"], "amount");
+  assert.equal((await ask("recarga de veinte al 5355551234 en 10 minutos")).instant?.intent?.["missing"], "amount");
+  const de = await ask("prepaid aufladen 0160 5550199 15€");
+  assert.equal(de.instant?.intent?.["phoneTail"], "0199");
+  assert.equal(de.instant?.intent?.["amount"], 15);
+  assert.equal(maskPII("recarga 5355551234 10").map["[PHONE_1]"], "5355551234");
+  assert.equal(maskPII("llama al +34 612 345 678").map["[PHONE_1]"], "+34 612 345 678");
 });

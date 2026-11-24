@@ -1,5 +1,6 @@
 import type { Channel, Lang, RiskClass, RouteRequest, TaskType, Triage } from "./types.js";
 import { clamp, estTokens, norm, reserveTokens, words, type Masked } from "./text.js";
+import { clauses, moneyView, signalsOf, tokenize, type Tok } from "./money.js";
 
 /**
  * Stage 3, "read": task, difficulty, risk and confidence from cheap signals (~1 ms).
@@ -40,7 +41,8 @@ const RISK_RULES: [Exclude<RiskClass, "none" | "pii">, RegExp][] = [
 ];
 const MONEY = /\b(pagos?|pagar|cobr\w*|transferencia\w*|transfer\w*|remesa\w*|ledger|libro mayor|contabilidad|reembols\w*|refund\w*|devolucion\w*|payout\w*|retiro\w*|retirar|withdraw\w*|stripe|checkout|billetera\w*|wallet\w*|comision\w*|commission\w*|nota de credito|credit memo|liquidacion\w*|settlement\w*|contracargo\w*|chargeback\w*|saldo\w*|payment\w*|monedero)\b/;
 const DISPUTE = /\b(reembols\w*|refund\w*|devolucion\w*|cobraron|me cobr\w*|charged|dos veces|twice|fraude|fraud|robo|robaron|stolen|no llego|no ha llegado|disputa\w*|dispute\w*|contracargo\w*|chargeback\w*)\b/;
-const INFO = /\b(compara\w*|compare\w*|explica\w*|explain\w*|como funciona|how does|que es|what is|diferencia\w*|difference|cuanto cuesta|cuanto sale|how much|recomiend\w*|recommend\w*|conviene|mejor forma|best way|paso a paso|step by step)\b/;
+/** Asking how something works or what it costs, in es, en, pt, fr and de. Scoped to its own clause (see isMoney). */
+const INFO = /\b(compara\w*|compare\w*|explica\w*|explain\w*|como funciona|how does|que es|what is|diferencia\w*|difference|cuanto cuesta|cuanto sale|how much|recomiend\w*|recommend\w*|conviene|mejor forma|best way|paso a paso|step by step|quanto custa|quanto sai|combien coute|coute combien|comment ca marche|comment fonctionne|was kostet|wie ?viel kostet|wie funktioniert)\b/;
 const LEAD: [RegExp, TaskType][] = [
   [/^(traduc\w*|translat\w*)$/, "translate"],
   [/^(resume\w*|resumir|summar\w*)$/, "summarize"],
@@ -53,15 +55,36 @@ const LEAD: [RegExp, TaskType][] = [
 ];
 const RISK_ORDER: RiskClass[] = ["money", "auth_security", "identity_kyc", "legal_compliance", "pii", "none"];
 
-/** Deterministic risk. The thinking step can never be talked out of it. */
+const text = (toks: Tok[]): string => toks.map((x) => x.t).join(" ");
+
+/**
+ * Does the text ask to move or spend money, or (outside chat) touch money at all?
+ * - Studio, agents and APIs: any money word counts, because that code moves real money.
+ * - Chat: a money action counts (see money.ts), and so does a money word, unless it sits in a clause that only
+ *   asks how something works or what it costs. "¿Cuánto cuesta enviar dinero?" is a question;
+ *   "¿cuánto cuesta? manda 10 a Ana" and "¿puedes mandar 10 a Ana?" are requests.
+ * - "Transfer me to a human" is a hand-over, not money.
+ */
+function isMoney(normalized: string, channel: Channel): boolean {
+  const toks = tokenize(moneyView(normalized));
+  const whole = signalsOf(toks);
+  const word = (t: string, excused: string[]): boolean =>
+    MONEY.test(excused.length ? t.split(" ").filter((x) => !excused.includes(x)).join(" ") : t);
+  if (!CHAT_CHANNELS.includes(channel)) return whole.action || MONEY.test(normalized);
+  if (DISPUTE.test(normalized) && (whole.action || word(text(toks), whole.excused))) return true;
+  const asked: Tok[] = [];
+  for (const c of clauses(toks)) if (!INFO.test(text(c))) asked.push(...c, { t: ".", k: "break" });
+  const sig = signalsOf(asked);
+  return sig.action || word(text(asked), sig.excused);
+}
+
+/**
+ * Deterministic risk. The thinking step can never be talked out of it.
+ * A routing hint, never a security control: callers must still gate money in their own code.
+ */
 export function riskOf(normalized: string, piiKinds: string[] = [], channel: Channel = "app"): { risk: RiskClass; hits: RiskClass[] } {
   const hits: RiskClass[] = [];
-  if (MONEY.test(normalized)) {
-    // In chat, a money word inside an informational question is not a money action.
-    // In Studio, agents and APIs, any money word counts: that code moves real money.
-    const chat = CHAT_CHANNELS.includes(channel);
-    if (!chat || DISPUTE.test(normalized) || !INFO.test(normalized)) hits.push("money");
-  }
+  if (isMoney(normalized, channel)) hits.push("money");
   for (const [risk, re] of RISK_RULES) {
     re.lastIndex = 0;
     if (re.test(normalized)) hits.push(risk);

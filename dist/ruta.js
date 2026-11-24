@@ -135,7 +135,8 @@ export function createRuta(cfg = {}) {
             return finalize(P, req, start, {
                 path: "instant", triage: tri, stages, reasons, masked, cap: 0, instant: inst,
                 baseline: baselineUsd(P, req.message.length + (req.system?.length ?? 0), lang, DEFAULT_CAPS.chat),
-                confirm: inst.kind === "topup", aiMayExecute: false,
+                // A top-up that still lacks a detail ("slot") is a money intent too: nothing runs without a confirmation.
+                confirm: inst.kind === "topup" || inst.kind === "slot", aiMayExecute: false,
             });
         }
         // 2 · memory: reuse a recent non-personal, non-risky answer.

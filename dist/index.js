@@ -4,6 +4,7 @@ export { createSwarm } from "./swarm.js";
 export { DEFAULT_POLICY, DEFAULT_TIERS, DEFAULT_CAPS, EXAMPLE_CATALOG, INSTANT_LABEL, mergePolicy, catalogFromRows, catalogFromOpenRouter } from "./catalog.js";
 export { classify, riskOf, isCodeTask } from "./classify.js";
 export { instantRules, matchFaq } from "./rules.js";
+export { moneySignals } from "./money.js";
 export { select, priorSuccess, posterior, attemptUsd, tierCapability, statKey } from "./select.js";
 export { explain, fmtNum, taskName, riskName } from "./explain.js";
 export { memoryStore } from "./store.js";
