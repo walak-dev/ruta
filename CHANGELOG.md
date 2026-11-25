@@ -86,6 +86,16 @@ Independent reviewers probed the first 0.2.0 commit with phrases the rules were 
 - Docs: the README no longer claims held-out numbers, legal confirmation or a `riskFloor` of 0.9; docs/EVAL.md
   has the round-1 held-out numbers measured before these fixes. 97 tests.
 
+### Review fixes (round 2, before release)
+
+A fresh set of 125 phrases, written without seeing the rules, found two missed money actions. Both are fixed
+and kept as tests in `test/corpus/heldout-round2.json`.
+
+- French "régler" (settle) is a payment when it has an amount, money, an account or a bill ("règle ma
+  facture"); "règle mon problème de connexion" is not money.
+- A German separable verb keeps its particle across "dann" and "auch": "Zeig mir mein Guthaben und heb dann
+  100 Euro ab" is a withdrawal. 100 tests, passing on Node 18, 20 and 22.
+
 ## 0.1.0
 
 First release: engine, provider adapters, swarm budgets, MCP server, Claude skill, 21 tests.

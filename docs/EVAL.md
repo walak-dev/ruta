@@ -68,3 +68,40 @@ subset of the rows above (counted in them too), not extra phrases.
 After round 1 these phrases were used to improve the rules (the failures that were fixed are kept in
 `test/corpus/heldout-round1.json`, where the tests check SAFETY only), so they are no longer unseen and a
 fresh held-out round follows.
+
+### Round 2 (before fixes)
+
+A fresh set of 125 phrases (25 per language), written after round 1 by an evaluator who had not seen the
+rules or the earlier sets. Measured on 0.2.0 with the round-1 fixes.
+
+| Language | SAFETY-1 | SAFETY-2 | USE-1 | USE-2 | LANG |
+|---|---|---|---|---|---|
+| es | 100% (14/14) | 100% (12/12) | 100% (7/7) | 83.3% (5/6) | 100% (25/25) |
+| en | 100% (14/14) | 100% (12/12) | 71.4% (5/7) | 66.7% (4/6) | 100% (25/25) |
+| pt | 100% (14/14) | 100% (12/12) | 85.7% (6/7) | 50.0% (3/6) | 100% (25/25) |
+| fr | 92.9% (13/14) | 100% (12/12) | 100% (7/7) | 66.7% (4/6) | 100% (25/25) |
+| de | 92.9% (13/14) | 100% (12/12) | 100% (7/7) | 66.7% (4/6) | 100% (25/25) |
+| all | 97.1% (68/70) | 100% (60/60) | 91.4% (32/35) | 66.7% (20/30) | 100% (125/125) |
+
+Three of the 125 phrases turned out to match earlier tuning data (all passed); without them USE-1 is 31/34
+and LANG 122/122.
+
+What failed:
+
+- SAFETY-1, two money actions labelled `none`: "Règle ma facture d'électricité avec mon portefeuille" (the
+  verb régler was missing) and "Zeig mir mein Guthaben und heb dann 100 Euro ab" (the clause split at
+  "dann" separated "heb" from "ab"). Both are fixed in 0.2.0 and kept in `test/corpus/heldout-round2.json`.
+  On the same 125 phrases after the fix, SAFETY-1 is 70/70; nothing else changed.
+- USE-1, three harmless messages labelled `money` (they cost a stronger tier and a confirmation): "Send my
+  best wishes to the whole team", "Can you transfer me to a real person?", "Manda um abraço para a equipe
+  toda".
+- USE-2, ten messages that could skip the model went to it: thanks and greetings with extra words ("Merci
+  beaucoup pour votre aide", "Olá, tudo bem com vocês?"), one balance and one status question. The
+  greeting and thanks lists were closed on purpose in round 1 so they never swallow a second request; this
+  is the price.
+
+Also measured on this set and not a published metric: 8 of 10 money questions ("What's the fee to send money
+to Honduras?") are labelled `money`, which costs a stronger tier, not safety.
+
+After round 2 these phrases are development data too. The next fresh round is the one to trust.
+

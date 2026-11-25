@@ -648,6 +648,10 @@ var PAY = rx(
   String.raw`pag[aou]\w* paye[rz]? payons payent paie paies pay paying payin paid zahl(?:e|en|t|st)? bezahl\w*`
 );
 var PAY_IDIOM = set("attention heed respect respects homage tribute mind");
+var PAY_WEAK = rx("regl(?:e|es|ez|er|ons|ent)");
+var BILL = set(
+  "facture factures factura facturas bill bills invoice invoices rechnung rechnungen boleto boletos"
+);
 var CASH = rx(
   String.raw`retir[aeo]\w* withdr[ae]w\w* cashout abheb\w* abzuheben abgehoben auszahl\w* auszuzahlen einzahl\w* einzuzahlen deposit\w* depos(?:er|e|ez|es|ons) saque\w*`
 );
@@ -721,7 +725,9 @@ function clauses(toks) {
   const out = [];
   let cur = [];
   for (const x of toks) {
-    if (x.k === "break" || x.k === "word" && CONJ.has(x.t)) {
+    const last = cur[cur.length - 1];
+    const stemOpen = last !== void 0 && last.k === "word" && (LAD.has(last.t) || HEB.has(last.t));
+    if (x.k === "break" || x.k === "word" && CONJ.has(x.t) && !stemOpen) {
       if (cur.length) out.push(cur);
       cur = [];
     } else cur.push(x);
@@ -811,7 +817,7 @@ function signalsOf(toks, chat = true) {
     const pronoun = PRONOUN.has(first) && (!after || PREP.has(after) || REPEAT_WEAK.test(after));
     return SEND_CLITIC.test(t) || pronoun || obj.some((o) => ALL.has(o)) || repeat || toWhom;
   };
-  let send = false, sendTopup = false, xfer = false, pay = false, cash = false, cashWeak = false;
+  let send = false, sendTopup = false, xfer = false, pay = false, cash = false, cashWeak = false, payWeak = false;
   let generic = false, topupTok = false, noun = false, doNoun = false, loose = false, move = false;
   const excused = [];
   for (let i = 0; i < toks.length; i++) {
@@ -842,6 +848,7 @@ function signalsOf(toks, chat = true) {
     if (t === "cash" && (w(i + 1) === "out" || w(i + 2) === "out")) cash = true;
     if (HEB.has(t) && closes(i, "ab")) cash = true;
     if (CASH_WEAK.test(t) || t === "take" && w(i + 1) === "out") cashWeak = true;
+    if (PAY_WEAK.test(t)) payWeak = true;
     if (GENERIC.test(t)) generic = true;
     if (TOPUP.test(t) || t === "top" && w(i + 1) === "up" || LAD.has(t) && closes(i, "auf"))
       topupTok = true;
@@ -858,7 +865,7 @@ function signalsOf(toks, chat = true) {
     // "faz outro igual" after "meu pix chegou?": repeat the last movement.
     ["repeat", chat && repeatStrong && (noun || topupTok)],
     ["transfer", xfer],
-    ["pay", pay],
+    ["pay", pay || payWeak && (worth || funds || account || has2(BILL))],
     ["withdraw_deposit", cash || cashWeak && (worth || funds || account || all)],
     [
       "add_funds",

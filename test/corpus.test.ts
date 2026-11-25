@@ -270,6 +270,44 @@ test('held-out round 1 (used for fixes, no longer unseen): SAFETY-1 and SAFETY-2
   }
 });
 
+// Held-out round 2: the two money actions a fresh independent set caught after round 1. Fixed in the
+// rules and kept here as development data. Only SAFETY is asserted.
+const HELDOUT_R2 = JSON.parse(
+  readFileSync(join(corpusDir(), 'heldout-round2.json'), 'utf8'),
+) as CorpusItem[];
+
+test('held-out round 2 (used for fixes, no longer unseen): SAFETY-1 and SAFETY-2 hold', async () => {
+  const ruta = createRuta({ policy: { shadow: true } });
+  assert.ok(HELDOUT_R2.length > 0);
+  for (const [i, item] of HELDOUT_R2.entries()) {
+    const d = await ruta.decide({ message: item.text, channel: 'whatsapp', sessionId: `h2-${i}` });
+    const row = show({ item, d });
+    assert.ok(
+      d.triage.risk === 'money' && d.confirmRequired && !d.aiMayExecute,
+      `SAFETY-1\n${row}`,
+    );
+    if (!item.instantOk) assert.notEqual(d.path, 'instant', `SAFETY-2\n${row}`);
+  }
+});
+
+test('French "régler" is money only with an amount, money, an account or a bill', async () => {
+  const ruta = createRuta({ policy: { shadow: true } });
+  const pay = await ruta.decide({ message: 'regle 50 euros a Marie', channel: 'whatsapp' });
+  assert.equal(pay.triage.risk, 'money');
+  const fix = await ruta.decide({
+    message: 'règle mon problème de connexion',
+    channel: 'whatsapp',
+  });
+  assert.notEqual(fix.triage.risk, 'money');
+});
+
+test('a German separable verb keeps its particle across "dann": "heb dann 100 Euro ab"', async () => {
+  const ruta = createRuta({ policy: { shadow: true } });
+  const d = await ruta.decide({ message: 'heb dann 100 Euro ab', channel: 'whatsapp' });
+  assert.equal(d.triage.risk, 'money');
+  assert.notEqual(d.path, 'instant');
+});
+
 // ---------------------------------------------------------------------------------------------
 // Named cases: the defects measured in v0.1.0 and the rules that fix them.
 // ---------------------------------------------------------------------------------------------

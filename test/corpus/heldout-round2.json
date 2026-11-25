@@ -1,0 +1,16 @@
+[
+  {
+    "text": "Règle ma facture d'électricité avec mon portefeuille",
+    "lang": "fr",
+    "category": "pay_or_withdraw_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "Zeig mir mein Guthaben und heb dann 100 Euro ab",
+    "lang": "de",
+    "category": "compound_with_money",
+    "moneyAction": true,
+    "instantOk": false
+  }
+]

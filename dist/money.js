@@ -52,6 +52,9 @@ const XFER = rx(String.raw `tra(?:n)?sfier\w* tra(?:n)?sferi\w* transfere[sm]? t
 /** Pay: on its own, except English idioms ("pay attention"). */
 const PAY = rx(String.raw `pag[aou]\w* paye[rz]? payons payent paie paies pay paying payin paid zahl(?:e|en|t|st)? bezahl\w*`);
 const PAY_IDIOM = set('attention heed respect respects homage tribute mind');
+/** French "régler" (settle): pay only with an amount, money, an account or a bill ("règle ma facture"). */
+const PAY_WEAK = rx('regl(?:e|es|ez|er|ons|ent)');
+const BILL = set('facture factures factura facturas bill bills invoice invoices rechnung rechnungen boleto boletos');
 /** Withdraw and deposit: on their own, except "remove me" ("retirez moi de la liste"). */
 const CASH = rx(String.raw `retir[aeo]\w* withdr[ae]w\w* cashout abheb\w* abzuheben abgehoben auszahl\w* auszuzahlen einzahl\w* einzuzahlen deposit\w* depos(?:er|e|ez|es|ons) saque\w*`);
 /** Everyday verbs that also mean "withdraw": need an amount, a currency, a funds noun or an account noun. */
@@ -108,7 +111,10 @@ export function clauses(toks) {
     const out = [];
     let cur = [];
     for (const x of toks) {
-        if (x.k === 'break' || (x.k === 'word' && CONJ.has(x.t))) {
+        // "heb dann 100 Euro ab": a separable stem waiting for its particle keeps the clause open.
+        const last = cur[cur.length - 1];
+        const stemOpen = last !== undefined && last.k === 'word' && (LAD.has(last.t) || HEB.has(last.t));
+        if (x.k === 'break' || (x.k === 'word' && CONJ.has(x.t) && !stemOpen)) {
             if (cur.length)
                 out.push(cur);
             cur = [];
@@ -246,7 +252,7 @@ export function signalsOf(toks, chat = true) {
         const pronoun = PRONOUN.has(first) && (!after || PREP.has(after) || REPEAT_WEAK.test(after));
         return SEND_CLITIC.test(t) || pronoun || obj.some((o) => ALL.has(o)) || repeat || toWhom;
     };
-    let send = false, sendTopup = false, xfer = false, pay = false, cash = false, cashWeak = false;
+    let send = false, sendTopup = false, xfer = false, pay = false, cash = false, cashWeak = false, payWeak = false;
     let generic = false, topupTok = false, noun = false, doNoun = false, loose = false, move = false;
     const excused = [];
     for (let i = 0; i < toks.length; i++) {
@@ -293,6 +299,8 @@ export function signalsOf(toks, chat = true) {
             cash = true;
         if (CASH_WEAK.test(t) || (t === 'take' && w(i + 1) === 'out'))
             cashWeak = true;
+        if (PAY_WEAK.test(t))
+            payWeak = true;
         if (GENERIC.test(t))
             generic = true;
         if (TOPUP.test(t) || (t === 'top' && w(i + 1) === 'up') || (LAD.has(t) && closes(i, 'auf')))
@@ -311,7 +319,7 @@ export function signalsOf(toks, chat = true) {
         // "faz outro igual" after "meu pix chegou?": repeat the last movement.
         ['repeat', chat && repeatStrong && (noun || topupTok)],
         ['transfer', xfer],
-        ['pay', pay],
+        ['pay', pay || (payWeak && (worth || funds || account || has(BILL)))],
         ['withdraw_deposit', cash || (cashWeak && (worth || funds || account || all))],
         [
             'add_funds',

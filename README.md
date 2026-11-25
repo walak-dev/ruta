@@ -47,7 +47,7 @@ Routers exist. This combination doesn't:
 npm install github:walak-dev/ruta#v0.2.0
 ```
 
-The `v0.2.0` tag is created when 0.2.0 is released; until it exists that command fails, so install `#main` instead. The repo ships a built `dist/`, so a git install needs no build step. No runtime dependencies. The package is ESM; CommonJS code can `require()` it on Node 20.19+ and 22.12+, and on older Node must use `await import()`.
+The repo ships a built `dist/`, so a git install needs no build step. No runtime dependencies. The package is ESM; CommonJS code can `require()` it on Node 20.19+ and 22.12+, and on older Node must use `await import()`.
 
 ```ts
 import { createRuta, catalogFromRows, toLogRecord } from "@walak-dev/ruta";
@@ -159,7 +159,7 @@ To copy `src/` into a monorepo instead of installing the package:
 
 v0.2: engine, adapters (OpenRouter and any OpenAI-compatible API, Anthropic, Bedrock, Hugging Face, Ollama), swarm budgets, MCP server, Claude skill, 97 tests, including a labelled corpus of 385 chat messages in five languages. CI runs lint, type-checks, rebuilds every committed artifact and runs the tests on Node 18, 20 and 22. What changed: [CHANGELOG.md](https://github.com/walak-dev/ruta/blob/main/CHANGELOG.md).
 
-The numbers in [docs/EVAL.md](https://github.com/walak-dev/ruta/blob/main/docs/EVAL.md) are on the development corpus, which the rules were tuned on, so they are an upper bound. One round of held-out phrases has been measured (before its fixes); a fresh held-out round is pending.
+[docs/EVAL.md](https://github.com/walak-dev/ruta/blob/main/docs/EVAL.md) has two kinds of numbers. The development corpus is what the rules were tuned on, so it is an upper bound. Two rounds of held-out phrases, written by evaluators who did not see the rules, were measured before their fixes: in round 2 (125 fresh phrases in five languages) Ruta caught 68 of 70 money requests and sent none of them down the no-model path; the two it missed were then fixed. Both rounds are now development data, so the next fresh round is the one to trust.
 
 Contributions welcome, especially intent rules for more countries and languages.
 
