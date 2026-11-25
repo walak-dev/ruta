@@ -23,20 +23,40 @@ export async function sha256(s) {
     }
     return toHex(sha256Bytes(bytes));
 }
+/** HMAC-SHA-256 (RFC 2104) of the UTF-8 message under the UTF-8 key, as hex. Pure, so it runs everywhere. */
+export function hmacSha256(key, message) {
+    let k = utf8(key);
+    if (k.length > 64)
+        k = sha256Bytes(k);
+    const msg = utf8(message);
+    const inner = new Uint8Array(64 + msg.length);
+    const outer = new Uint8Array(64 + 32);
+    for (let i = 0; i < 64; i++) {
+        inner[i] = (k[i] ?? 0) ^ 0x36;
+        outer[i] = (k[i] ?? 0) ^ 0x5c;
+    }
+    inner.set(msg, 64);
+    outer.set(sha256Bytes(inner), 64);
+    return toHex(sha256Bytes(outer));
+}
 /**
  * Tamper-evident decision record: hashes instead of prompts, chained to the previous
- * record (AgentWorks-compatible). Nothing personal is stored in clear.
+ * record (AgentWorks-compatible). No message, user id or session id is stored in clear.
+ * Without `secret` the user, session and message hashes are plain SHA-256: a short value
+ * (a phone number used as user id, a card number as the whole message) can be found by trying
+ * candidates. Pass `policy.auditSecret` to key them with HMAC-SHA-256.
  */
-export async function buildAudit(d, req, store) {
+export async function buildAudit(d, req, store, secret) {
     const prevHash = store.lastHash();
+    const h = async (s) => (secret ? hmacSha256(secret, s) : sha256(s));
     const base = {
         id: d.id,
         at: new Date(req.now ?? Date.now()).toISOString(),
         ...(req.tenantId ? { tenantId: req.tenantId } : {}),
-        ...(req.userId ? { userHash: (await sha256(`u:${req.userId}`)).slice(0, 16) } : {}),
-        ...(req.sessionId ? { sessionHash: (await sha256(`s:${req.sessionId}`)).slice(0, 16) } : {}),
+        ...(req.userId ? { userHash: (await h(`u:${req.userId}`)).slice(0, 16) } : {}),
+        ...(req.sessionId ? { sessionHash: (await h(`s:${req.sessionId}`)).slice(0, 16) } : {}),
         channel: req.channel ?? 'app',
-        inputHash: await sha256(req.message),
+        inputHash: await h(req.message),
         path: d.path,
         task: d.triage.task,
         risk: d.triage.risk,

@@ -1,5 +1,5 @@
 import { maskPII, norm } from './text.js';
-const TOKEN = /\[(?:email|phone|card|iban)_\d+\]|\d+(?:[.,:]\d+)*|[a-z]+|[$€£]|[?!.;,\n]/g;
+const TOKEN = /\[(?:email|phone|card|iban|cvv)_\d+\]|\d+(?:[.,:]\d+)*|[a-z]+|[$€£]|[?!.;,\n]/g;
 /** Accent-free lowercase text with PII placeholders. Safe to call on text that is already masked. */
 export function moneyView(normalized) {
     return norm(maskPII(normalized).text).replace(/ß/g, 'ss');
@@ -23,8 +23,28 @@ export function tokenize(view) {
 }
 const set = (s) => new Set(s.split(/\s+/).filter(Boolean));
 const rx = (s) => new RegExp(`^(?:${s.trim().split(/\s+/).join('|')})$`);
-/** Send and give: money only with an amount, a currency, a funds noun, or "everything" plus a recipient. */
-const SEND = rx(String.raw `mand[aeo]\w* envi[aeo]\w* pas[ae](?:le|les|me|melo|selo|sela|nos)\w* pass[ae] passar send\w* sent schick\w* envo[iy]\w*`);
+/** Send and give: money with an amount, a currency, a funds noun or "everything"; in chat also see sendLoose. */
+const SEND = rx(String.raw `mand[aeo]\w* envi[aeo]\w* reenvi\w* pas[ae](?:le|les|me|melo|selo|sela|nos)\w* pass[ae] passar send\w* resend\w* sent schick\w* envo[iy]\w* renvo[iy]\w*`);
+/** Past forms of send: they report a send ("o pix que eu mandei"), so they never take the loose chat rule. */
+const SEND_PAST = rx(String.raw `sent mand(?:e|ei|o|ou|aste|aron|ado|ada|ados|adas) envi(?:e|ei|o|ou|aste|aron|ado|ada|ados|adas) envoye\w* geschickt gesendet passei passou`);
+/** A send verb with a third-person object pronoun attached: "mándalo", "envíale", "pásaselo", "reenvíalo". */
+const SEND_CLITIC = /(?:lo|la|los|las|le|les|selo|sela|selos|selas|melo|mela)$/;
+/** Object pronouns written as their own word: "send it", "envoie-le", "schick es". Only when nothing but a recipient follows. */
+const PRONOUN = set('it them that this lo la le les los las ele ela eles elas o a es das ihn ihm ihr sie ca cela');
+/** Things people send that are not money. A send verb whose object is one of these is never money by the loose rule. */
+const NOT_MONEY_OBJ = set(`saludos saludo saludito besos beso abrazo abrazos foto fotos imagen captura pantallazo video audio nota mensaje mensajes
+  catalogo menu carta ubicacion direccion link enlace info informacion detalles datos documento documentos archivo pdf lista precios
+  factura recibo comprobante ticket codigo pedido paquete encomienda tarea correo email mail contrasena clave
+  greetings regards love hug hugs photo photos picture pic pics image screenshot message messages text catalog catalogue
+  location address directions details data document file files list prices invoice receipt code order package parcel homework password
+  cardapio endereco localizacao mensagem imagem arquivo recibo boleto beijos abraco abracos recado recados aviso comprovante comprovantes
+  bonjour bises bisous salutations amities photo photos adresse localisation lien liste prix facture recu commande colis
+  grusse gruesse gruss foto bild bilder adresse standort nachricht datei liste preise rechnung beleg bestellung paket katalog`);
+/** Words that ask to repeat the last send or transfer: "otro igual", "lo mismo", "nochmal dasselbe", "send it again". */
+const REPEAT_STRONG = /\b(?:otr[oa] (?:igual|mas)|outr[oa] (?:igual|mais)|mais uma?|lo mismo|la misma|o mesmo|a mesma|same again|another one|one more|une? autre|la meme chose|pareil|nochmal|noch ?einmal|nochmals|dasselbe|das ?selbe|das gleiche)\b/;
+const REPEAT_WEAK = /\b(?:again|de nuevo|otra vez|de novo|outra vez|encore|the same|wieder|ultim[oa]|last one|dernier|letzte\w*)\b/;
+/** Move: money with an amount, a funds or account noun, or "everything": "move it all to savings", "mueve todo a ahorros". */
+const MOVE = rx(String.raw `move[sd]? moving mueve\w* mover\w* muev\w*`);
 const GIVE = rx('da(?:le|les|me|selo|rle|rles) dele denle give giving gib gebe geben donne[zr]?');
 const MINE = set('mi mis my meu minha mon ma mes mein meine meinen');
 /** Transfer: a financial verb on its own, unless it hands the customer over to a person ("transfer me to a human"). */
@@ -54,7 +74,8 @@ const CURRENCY = set(`usd eur mxn cup mlc cop ars brl pen bob clp pyg uyu gtq hn
   dolar dolares dollar dollars dolars bucks buck peso pesos euro euros real reais soles boliviano bolivianos lempira lempiras
   guarani guaranies quetzal quetzales colones cordobas gourde gourdes franc francs franco francos balles conto contos centavos cents
   pound pounds libras lucas pavos varos bolivares`);
-const ALL = set('todo toda todito tudo all everything tout toute alles ganze ganzes ganzen gesamte gesamtes entire whole resto rest reste');
+/** "Everything", "the rest" and fractions of it ("half"). */
+const ALL = set('todo toda todito tudo all everything tout toute alles ganze ganzes ganzen gesamte gesamtes entire whole resto rest reste mitad half metade moitie halfte haelfte');
 /** Prepositions that introduce who receives: "a Ana", "to ana", "para", "pra", "pour", "à", "an", "für". */
 const PREP = set('a al para pa to for pra pro ao pour au aux vers an fur fuer nach sur auf');
 const ME = set('me moi mich nos us');
@@ -72,7 +93,10 @@ const NUM_WORD = rx(String.raw `dos tres cuatro cinco seis siete ocho nueve diez
 /** After a number these make it a time or a count, not an amount: "2 horas", "10 am", "3 veces". */
 const NOT_AMOUNT_AFTER = rx(String.raw `h hs hrs am pm uhr horas? hours? heures? stunden? minut\w* min seg segundos? seconds? secs? sekunden? secondes? dias? days? jours? tage? tagen semanas? weeks? mes meses months? anos? years? veces vez times fois mal`);
 /** Before a number these make it a reference or a clock time: "pedido 4521", "a las 10". */
-const NOT_AMOUNT_BEFORE = set('pedido orden order ticket codigo code bestellung commande referencia reference ref nro las at um');
+const NOT_AMOUNT_BEFORE = set('pedido orden order ticket codigo code bestellung commande referencia reference ref nro las as at um vers');
+/** After one of these, "pago", "retiro", "depósito" or "payment" is a noun ("¿ya llegó mi pago?"), which needs an amount. */
+const DET = set('el la los las un una mi mis tu su sus the my a an your his her this that o os um uma meu minha seu sua mon ma le les une mein meine der die das den dem ein eine');
+const NOUN_FORM = rx('pagos? pagamentos? payments? retiros? saques? depositos? deposits? withdrawals? zahlungs?');
 const THOUSAND = set('mil k thousand mille tausend');
 /** German separable verbs: "lade ... auf" (top up), "heb ... ab" (withdraw). The particle closes the clause. */
 const LAD = set('lad lade');
@@ -96,7 +120,11 @@ export function clauses(toks) {
         out.push(cur);
     return out;
 }
-export function signalsOf(toks) {
+/**
+ * `chat` (the default) adds the loose chat rules: a send whose object is implied, "everything", a repeat
+ * or a recipient. Studio, agent and API text leave them off: "send the form to the endpoint" is code.
+ */
+export function signalsOf(toks, chat = true) {
     const w = (i) => {
         const x = toks[i];
         return x && x.k === 'word' ? x.t : '';
@@ -166,22 +194,68 @@ export function signalsOf(toks) {
     const phone = has(PHONE_NOUN) || toks.some((x) => x.k === 'pii' && x.t.startsWith('[phone'));
     const all = has(ALL);
     const human = toks.some((x) => x.k === 'word' && HUMAN.test(x.t));
+    // The last non-polite word after each token, within its clause. Computed once, so long input stays linear.
+    const lastAfter = new Array(toks.length);
+    let lastWord = '';
+    for (let j = toks.length - 1; j >= 0; j--) {
+        lastAfter[j] = lastWord;
+        if (kind(j) === 'break')
+            lastWord = '';
+        else if (w(j) && !POLITE.has(w(j)) && lastWord === '')
+            lastWord = w(j);
+    }
     /** Is `particle` the last word of the clause that holds token i? ("lade … auf", "heb … ab") */
-    const closes = (i, particle) => {
-        let last = '';
-        for (let j = i + 1; j < toks.length && kind(j) !== 'break'; j++)
-            if (w(j) && !POLITE.has(w(j)))
-                last = w(j);
-        return last === particle;
+    const closes = (i, particle) => lastAfter[i] === particle;
+    const said = toks
+        .filter((x) => x.k === 'word')
+        .map((x) => x.t)
+        .join(' ');
+    const repeatStrong = REPEAT_STRONG.test(said);
+    const repeat = repeatStrong || REPEAT_WEAK.test(said);
+    /**
+     * Chat only: a send verb with no amount still asks to send money when its object is implied ("mándalo",
+     * "send it", "envoie-le"), is "everything" or a fraction, repeats the last send, or goes to a recipient.
+     * Not when the object is a known non-money thing ("mándame la ubicación", "manda saludos a Ana").
+     * Looks at most 6 tokens ahead, so long input stays linear.
+     */
+    const sendLoose = (i) => {
+        const t = w(i);
+        if (SEND_PAST.test(t))
+            return false;
+        const obj = [];
+        let toWhom = false;
+        for (let j = i + 1; j < Math.min(toks.length, i + 7) && kind(j) !== 'break'; j++) {
+            // "envia a foto": "a" is an article here, not "to".
+            if (isRecipient(j) && !NOT_MONEY_OBJ.has(w(j + 1))) {
+                toWhom = true;
+                break;
+            }
+            if (w(j))
+                obj.push(w(j));
+        }
+        // German puts the verb last: "kannst du mir die rechnung nochmal schicken?" names the object before it.
+        if (!lastAfter[i])
+            for (let j = i - 1; j >= Math.max(0, i - 6) && kind(j) !== 'break'; j--)
+                if (w(j))
+                    obj.push(w(j));
+        if (obj.some((o) => NOT_MONEY_OBJ.has(o)))
+            return false;
+        const content = obj.filter((o) => !POLITE.has(o) && !ME.has(o) && o !== 'mir' && o !== 'uns');
+        const first = content[0] ?? '';
+        const after = content[1] ?? '';
+        const pronoun = PRONOUN.has(first) && (!after || PREP.has(after) || REPEAT_WEAK.test(after));
+        return SEND_CLITIC.test(t) || pronoun || obj.some((o) => ALL.has(o)) || repeat || toWhom;
     };
     let send = false, sendTopup = false, xfer = false, pay = false, cash = false, cashWeak = false;
-    let generic = false, topupTok = false, noun = false, doNoun = false;
+    let generic = false, topupTok = false, noun = false, doNoun = false, loose = false, move = false;
     const excused = [];
     for (let i = 0; i < toks.length; i++) {
         const t = w(i);
         if (!t)
             continue;
         const enNoun = t === 'transfer' && EN_DET.has(w(i - 1));
+        // "mi pago", "el retiro", "my payment": a noun, which counts only with an amount or after "make a …".
+        const detNoun = DET.has(w(i - 1)) && NOUN_FORM.test(t);
         if (GIVE.test(t))
             send = true;
         if (SEND.test(t)) {
@@ -189,9 +263,14 @@ export function signalsOf(toks) {
             const object = [w(i + 1), w(i + 2), w(i + 3)];
             if (object.some((o) => AIRTIME.has(o) || TOPUP.test(o)) && !object.some((o) => MINE.has(o)))
                 sendTopup = true;
-            else
+            else {
                 send = true;
+                if (chat && !loose && sendLoose(i))
+                    loose = true;
+            }
         }
+        if (MOVE.test(t))
+            move = true;
         if (XFER.test(t) && !enNoun) {
             const clitic = /^tra(?:n)?sf\w+[aeir]n?(?:me|nos)$/.test(t);
             if (!worth && (clitic || ME.has(w(i - 1)) || ME.has(w(i + 1)) || human))
@@ -199,9 +278,14 @@ export function signalsOf(toks) {
             else
                 xfer = true;
         }
-        if (PAY.test(t) && !PAY_IDIOM.has(w(i + 1)) && !(w(i + 1) === 'a' && w(i + 2) === 'visit'))
+        if (PAY.test(t) &&
+            !detNoun &&
+            !PAY_IDIOM.has(w(i + 1)) &&
+            !(w(i + 1) === 'a' && w(i + 2) === 'visit'))
             pay = true;
-        if (CASH.test(t) && (worth || !(ME.has(w(i + 1)) || /^retir\w*[aeir]n?(?:me|nos)$/.test(t))))
+        if (CASH.test(t) &&
+            !detNoun &&
+            (worth || !(ME.has(w(i + 1)) || /^retir\w*[aeir]n?(?:me|nos)$/.test(t))))
             cash = true;
         if (t === 'cash' && (w(i + 1) === 'out' || w(i + 2) === 'out'))
             cash = true;
@@ -213,7 +297,7 @@ export function signalsOf(toks) {
             generic = true;
         if (TOPUP.test(t) || (t === 'top' && w(i + 1) === 'up') || (LAD.has(t) && closes(i, 'auf')))
             topupTok = true;
-        if (ACTION_NOUN.test(t) || enNoun) {
+        if (ACTION_NOUN.test(t) || enNoun || detNoun) {
             noun = true;
             if (DO.test(w(i - 1)) || DO.test(w(i - 2)) || DO.test(w(i - 3)))
                 doNoun = true;
@@ -222,7 +306,10 @@ export function signalsOf(toks) {
     const airtimeAdd = generic && airtime;
     const topupLex = (topupTok || sendTopup) && !has(TOPUP_NOT);
     const rules = [
-        ['send', send && (worth || funds || (all && recipient))],
+        ['send', send && (worth || funds || (all && recipient) || loose)],
+        ['move', move && (worth || funds || all || account)],
+        // "faz outro igual" after "meu pix chegou?": repeat the last movement.
+        ['repeat', chat && repeatStrong && (noun || topupTok)],
         ['transfer', xfer],
         ['pay', pay],
         ['withdraw_deposit', cash || (cashWeak && (worth || funds || account || all))],
@@ -238,6 +325,8 @@ export function signalsOf(toks) {
     const fired = (name) => why.includes(name);
     const topupWord = (topupLex || airtimeAdd) && !account;
     const other = fired('send') ||
+        fired('move') ||
+        fired('repeat') ||
         fired('transfer') ||
         fired('pay') ||
         fired('withdraw_deposit') ||
@@ -255,6 +344,30 @@ export function signalsOf(toks) {
         excused,
         why,
     };
+}
+/** A word that can make a clause a money action: a send, transfer, pay, withdraw, add, move or top-up verb, or a movement noun. */
+export function isMoneyWord(t) {
+    return [SEND, GIVE, XFER, PAY, CASH, CASH_WEAK, GENERIC, TOPUP, ACTION_NOUN, MOVE].some((re) => re.test(t));
+}
+/** Infinitives and gerunds (es, pt, fr: -ar/-er/-ir, with clitics; -ando/-endo/-indo; en -ing) and German "abzuheben". */
+/** Prepositions that take a noun: "por recarga", "costo de envío", "cost of sending", "via pix". */
+const OF = set('por de del of par per com con with avec mit via en in by sin sem sans ohne');
+const NON_FINITE = /^(?:\w{2,}(?:ar|er|ir)(?:le|les|lo|la|los|las|me|te|se|nos|selo|sela)?|\w{2,}(?:ando|iendo|endo|indo|ing)(?:le|lo|la|me|se)?|\w+zu\w{3,})$/;
+/**
+ * Is the money word at token i only the topic of a question that comes before it? True for a noun, an infinitive
+ * or gerund, a verb after "to" or "zu", or a word after an article or preposition: "cuánto cuesta enviar…",
+ * "how much does it cost to send…", "was kostet es … zu schicken", "combien coûte un virement…".
+ * False for a finite verb ("manda", "send", "überweise"): that is a request, whatever question follows.
+ * English "transfer" is a bare verb, not an infinitive, even though it ends in -er.
+ */
+export function isNonFinite(toks, i) {
+    const t = toks[i]?.t ?? '';
+    const prev = toks[i - 1]?.k === 'word' ? toks[i - 1].t : '';
+    if (ACTION_NOUN.test(t) || NOUN_FORM.test(t))
+        return true;
+    if (prev === 'to' || prev === 'zu' || DET.has(prev) || PREP.has(prev) || OF.has(prev))
+        return true;
+    return NON_FINITE.test(t) && !/^tra\w*fer$/.test(t);
 }
 /** Signals for accent-free lowercase text (raw or already masked). */
 export function moneySignals(normalized) {

@@ -26,7 +26,13 @@ export interface RunAttempt {
 }
 export interface RunResult {
     decision: Decision;
+    /**
+     * The answer. When `needsHandler` is true it is only a holding line or a confirmation prompt
+     * ("Consulto tu saldo."): your own code must look up the balance or order, or confirm and run the top-up.
+     */
     text: string;
+    /** True for instant balance, status and top-up intents: see `text`. */
+    needsHandler?: boolean;
     costUsd: number;
     refused?: boolean;
     failed?: boolean;

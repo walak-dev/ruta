@@ -72,7 +72,13 @@ export interface RunAttempt {
 }
 export interface RunResult {
   decision: Decision;
+  /**
+   * The answer. When `needsHandler` is true it is only a holding line or a confirmation prompt
+   * ("Consulto tu saldo."): your own code must look up the balance or order, or confirm and run the top-up.
+   */
   text: string;
+  /** True for instant balance, status and top-up intents: see `text`. */
+  needsHandler?: boolean;
   costUsd: number;
   refused?: boolean;
   failed?: boolean;
@@ -264,7 +270,7 @@ export function createRuta(cfg: RutaConfig = {}) {
       shadow: P.shadow,
     };
     const full = d as Decision;
-    full.audit = await buildAudit(d, req, store);
+    full.audit = await buildAudit(d, req, store, P.auditSecret);
     // thinkMs covers the whole decide() call, audit hashing included (the audit record does not contain it).
     // Only the explanation, which prints this number, is built after it: plain string work.
     full.thinkMs = clock() - start;
@@ -656,7 +662,13 @@ export function createRuta(cfg: RutaConfig = {}) {
     const d = await decide(req, opts.override);
     const L = langKey(d.triage.lang);
     if (d.path === 'instant')
-      return { decision: d, text: d.instant?.answer[L] ?? '', costUsd: 0, attempts: [] };
+      return {
+        decision: d,
+        text: d.instant?.answer[L] ?? '',
+        costUsd: 0,
+        attempts: [],
+        ...(d.instant?.needsHandler ? { needsHandler: true } : {}),
+      };
     if (d.path === 'cache') return { decision: d, text: d.cached ?? '', costUsd: 0, attempts: [] };
     if (d.path === 'refuse')
       return { decision: d, text: d.explain.customer[L], costUsd: 0, refused: true, attempts: [] };
@@ -665,6 +677,9 @@ export function createRuta(cfg: RutaConfig = {}) {
       ...d.escalation,
     ];
     const hist = (req.history ?? []).slice(-policy.keepTurns);
+    // History is masked with the message's token map, so a provider that gets masked text gets it for every turn.
+    const tokens: Record<string, string> = { ...(d.masked?.map ?? {}) };
+    const maskedHist = hist.map((t) => ({ ...t, content: maskPII(t.content, tokens).text }));
     const system =
       [req.system, d.directive?.[L]].filter((x): x is string => !!x).join('\n\n') || undefined;
     const attempts: RunAttempt[] = [];
@@ -677,9 +692,8 @@ export function createRuta(cfg: RutaConfig = {}) {
         continue;
       }
       const mask =
-        !!d.masked &&
-        (policy.maskPii === 'all' ||
-          (policy.maskPii === 'untrusted' && !spec.local && !spec.zeroDataRetention));
+        policy.maskPii === 'all' ||
+        (policy.maskPii === 'untrusted' && !spec.local && !spec.zeroDataRetention);
       const content = mask && d.masked ? d.masked.text : req.message;
       const stepDecision: Decision = {
         ...d,
@@ -691,12 +705,12 @@ export function createRuta(cfg: RutaConfig = {}) {
         const r = await adapter({
           model: step.model,
           ...(system ? { system } : {}),
-          messages: [...hist, { role: 'user', content }],
+          messages: [...(mask ? maskedHist : hist), { role: 'user', content }],
           maxOutputTokens: d.maxOutputTokens,
           ...(req.sessionId ? { sessionId: req.sessionId } : {}),
           ...(opts.user ? { user: opts.user } : {}),
         });
-        const text = mask && d.masked ? unmask(r.text, d.masked.map) : r.text;
+        const text = mask ? unmask(r.text, tokens) : r.text;
         const cost =
           r.costUsd ??
           attemptUsd(

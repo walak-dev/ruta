@@ -8,12 +8,15 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./adapters": {
       "types": "./dist/adapters/index.d.ts",
-      "import": "./dist/adapters/index.js"
-    }
+      "import": "./dist/adapters/index.js",
+      "default": "./dist/adapters/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "bin": {
     "ruta": "dist/cli.js"
@@ -21,11 +24,14 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md",
+    "docs/EVAL.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck:core": "tsc -p tsconfig.core.json",
+    "typecheck:all": "tsc -p tsconfig.all.json",
     "test": "tsc -p tsconfig.test.json && node --test .test-build/test/*.test.js",
     "bundle": "node scripts/bundle.mjs",
     "build:skill": "esbuild src/cli.ts --bundle --platform=node --format=esm --target=node18 --log-level=warning --outfile=claude/skills/ruta/scripts/ruta.mjs",

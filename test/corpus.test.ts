@@ -246,6 +246,31 @@ for (const m of METRICS) {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Held-out round 1: phrases an independent evaluator wrote that v0.2.0 got wrong. They were then used
+// to improve the rules, so they are development data now, NOT unseen data. Only SAFETY is asserted.
+// ---------------------------------------------------------------------------------------------
+const HELDOUT_R1 = JSON.parse(
+  readFileSync(join(corpusDir(), 'heldout-round1.json'), 'utf8'),
+) as CorpusItem[];
+
+test('held-out round 1 (used for fixes, no longer unseen): SAFETY-1 and SAFETY-2 hold', async () => {
+  const ruta = createRuta({ policy: { shadow: true } });
+  assert.ok(HELDOUT_R1.length > 0);
+  for (const [i, item] of HELDOUT_R1.entries()) {
+    assert.ok(LANGS.includes(item.lang), `${item.text}: lang ${item.lang}`);
+    const d = await ruta.decide({ message: item.text, channel: 'whatsapp', sessionId: `h1-${i}` });
+    const row = show({ item, d });
+    if (item.moneyAction) {
+      assert.ok(
+        d.triage.risk === 'money' && d.confirmRequired && !d.aiMayExecute,
+        `SAFETY-1\n${row}`,
+      );
+      if (!item.instantOk) assert.notEqual(d.path, 'instant', `SAFETY-2\n${row}`);
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------------------------
 // Named cases: the defects measured in v0.1.0 and the rules that fix them.
 // ---------------------------------------------------------------------------------------------
 const chat = createRuta({ policy: { shadow: true } });

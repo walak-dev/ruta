@@ -23,10 +23,12 @@ export interface Masked {
     kinds: string[];
 }
 /**
- * Replaces phones, cards (Luhn-checked), emails and IBANs with tokens like [PHONE_1].
- * The map stays server-side; models only ever see tokens.
+ * Replaces phones, cards (Luhn-checked), emails, IBANs (checksum-validated) and card security codes
+ * with tokens like [PHONE_1]. The map stays server-side; models only ever see tokens.
+ * With `shared`, several texts (a message and its history) use one map: numbering continues from it,
+ * a value already in it keeps its token, and new tokens are added to it.
  */
-export declare function maskPII(input: string): Masked;
+export declare function maskPII(input: string, shared?: Record<string, string>): Masked;
 export declare function unmask(text: string, map: Record<string, string>): string;
 export declare function tailDigits(value: string, n?: number): string;
 export declare function clamp(x: number, lo?: number, hi?: number): number;

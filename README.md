@@ -25,8 +25,8 @@ The thinking usually takes under 5 ms. A tiny model is consulted only when the c
 
 Routers exist. This combination doesn't:
 
-1. **The cheapest model is no model.** A zero-AI path for greetings, FAQs, status and balance lookups, and structured intents, with slot filling ("¿A qué número va la recarga?"). Only a message that is that one request takes it; anything more goes to a model.
-2. **Risk beats complexity.** Money, auth and security, identity and KYC, and legal requests get a minimum tier and are flagged for confirmation. Money requests come back with `aiMayExecute: false`: AI can draft money logic, your code executes it.
+1. **The cheapest model is no model.** A zero-AI path for greetings, FAQs, status and balance lookups, and structured intents, with slot filling ("¿A qué número va la recarga?"). Only a message that is that one request takes it; anything more goes to a model. Greetings and thanks may use only greeting, thanks, politeness and form-of-address words ("hola amigo", "muchas gracias por la ayuda"), and an FAQ answer needs every content word of the message to be in that FAQ's questions, so "gracias, bloquea mi tarjeta" or "¿a qué hora abren? y mi saldo" go to a model.
+2. **Risk beats complexity.** Money, auth and security, identity and KYC, and legal requests get a minimum tier. Money, auth and identity requests are also flagged for confirmation (`confirmFor`). Money requests come back with `aiMayExecute: false`: AI can draft money logic, your code executes it.
 3. **Expected cost to a usable answer.** `attempt + (1 − p) × (next tier + cost of a wrong answer)`. A cheap model that fails often loses to one that works the first time.
 4. **Cache-aware stickiness.** Staying on a warm model is priced in, so Ruta keeps a session where the provider already cached your project instead of re-reading it elsewhere.
 5. **Output and context diet.** Per-task output caps, short-channel caps for WhatsApp and SMS, and only the last four turns after a stable, cacheable prefix.
@@ -39,7 +39,7 @@ Routers exist. This combination doesn't:
 12. **Shadow mode.** Decide and log what Ruta would do beside what you do today, before you switch anything.
 13. **Learns your traffic.** Outcomes update success odds per task, model, language and difficulty.
 14. **Tamper-evident audit.** Each decision is hash-chained and stores hashes, not prompts.
-15. **PII stays home.** Phones, cards (Luhn-checked), emails and IBANs become tokens like `[PHONE_1]`. `run()` sends the masked text to untrusted providers; if you call the provider yourself, send `d.masked.text` when it is present.
+15. **PII stays home.** Phones, cards (Luhn-checked), card security codes, emails and IBANs (any letter case, checksum-validated) become tokens like `[PHONE_1]`. `run()` sends the masked message and masked history to untrusted providers; if you call the provider yourself, send `d.masked.text` when it is present.
 
 ## Quick start
 
@@ -47,7 +47,7 @@ Routers exist. This combination doesn't:
 npm install github:walak-dev/ruta#v0.2.0
 ```
 
-The repo ships a built `dist/`, so a git install needs no build step. No runtime dependencies.
+The `v0.2.0` tag is created when 0.2.0 is released; until it exists that command fails, so install `#main` instead. The repo ships a built `dist/`, so a git install needs no build step. No runtime dependencies. The package is ESM; CommonJS code can `require()` it on Node 20.19+ and 22.12+, and on older Node must use `await import()`.
 
 ```ts
 import { createRuta, catalogFromRows, toLogRecord } from "@walak-dev/ruta";
@@ -120,7 +120,7 @@ The built-in catalog is **illustrative** so the engine runs out of the box. Load
 |---|---|---|
 | `allowTiers` | all | Tiers a plan may use |
 | `riskMinTier` | money, auth, identity, legal → `pro` | Risk beats complexity |
-| `riskFloor` | 0.55 … 0.9 | Minimum predicted success per risk class |
+| `riskFloor` | 0.55 … 0.85 | Minimum predicted success per risk class |
 | `confirmFor` | money, auth, identity | Human confirmation gate |
 | `aiNeverExecutes` | money, identity | AI drafts, deterministic code executes |
 | `roleBounds` | orchestrator/reviewer ≥ pro, worker ≤ pro | Swarm roles |
@@ -132,24 +132,34 @@ The built-in catalog is **illustrative** so the engine runs out of the box. Load
 | `shadow` | false | Decide and log only |
 | `customerWording` | `tier` | Customers never see vendor or model names |
 | `creditUsd` | 0.01 | Display unit for "créditos" |
+| `auditSecret` | none | Key for the audit hashes of user id, session id and message (HMAC-SHA-256); without it they are plain SHA-256 |
 
 ## Languages
 
 The rules for greetings, thanks, balance, status, top-up and money cover Spanish (es), English (en), Portuguese (pt), French (fr) and German (de). Haitian Creole (ht) has greetings and thanks only. The other risk classes (auth and security, identity and KYC, legal) still use mostly Spanish and English words: "ich habe mein Passwort vergessen" is not labelled `auth_security` yet. `detectLang` guesses the language from the message; when you already know the customer's language, pass it as `lang` and it always wins.
 
+## Vendoring the source
+
+To copy `src/` into a monorepo instead of installing the package:
+
+- The core (everything except `src/cli.ts` and `src/adapters/`) type-checks with `lib: ["ES2022"]`, no DOM, `isolatedModules` and no `@types/node` (`npm run typecheck:core`). The adapters use `fetch` and `Response`, and the CLI uses `node:fs`, so those need `@types/node` (or DOM): `npm run typecheck:all` checks all of `src` with `lib: ["ES2022"]` and Node types.
+- Use your own package.json for the copy: `"type": "module"`, `main`/`types` pointing at `src/index.ts` if your workspace consumes source, no `bin` and no peer dependency unless you keep the CLI and the Bedrock adapter. `test/corpus.test.ts` uses `import.meta.url`, which needs `"type": "module"`.
+- The tests are in `test/` and use `node:test`. Under vitest, point `include` at `test/**/*.test.ts`, import `test` from `vitest` instead of `node:test`, and drop the one `t.diagnostic()` call in `test/corpus.test.ts`.
+
 ## Limits
 
 - **The risk label is a routing hint, not a security control.** `risk: "money"`, `confirmRequired` and `aiMayExecute` choose a tier and tell your code what to do. Ruta moves no money and blocks nothing. Your own code must gate every money movement (confirmation, limits, authorization), whatever Ruta says.
-- **Instant answers for status, balance and top-up are intents, not results.** `answer` holds a placeholder sentence ("Consulto tu saldo.") and `needsHandler` is true. A deterministic handler of yours must look up the balance or order, or confirm and run the top-up. Greetings, thanks and FAQ answers are final.
+- **Instant answers for status, balance and top-up are intents, not results.** `answer` holds a placeholder sentence ("Consulto tu saldo.") and `needsHandler` is true. A deterministic handler of yours must look up the balance or order, or confirm and run the top-up. `run()` returns the same text with `needsHandler: true`. Greetings, thanks and FAQ answers are final.
 - **Never log a Decision whole.** `d.masked.map` holds the original emails, phones, cards and IBANs. Log `toLogRecord(d)`, which copies routing facts only.
+- **Audit hashes are not anonymous by default.** Without `auditSecret`, `userHash`, `sessionHash` and `inputHash` are plain SHA-256, and a short value (a phone number as user id, a card number sent as the whole message) can be found by hashing candidates. Set `policy.auditSecret` per tenant and keep it outside the audit store.
 - **Success odds start as priors.** They get good only once your outcomes flow back through `record()`.
-- The rules are word lists and patterns, tuned on a development corpus. They will miss phrasings nobody wrote down; the measured numbers are in [docs/EVAL.md](docs/EVAL.md).
+- The rules are word lists and patterns, tuned on a development corpus. They will miss phrasings nobody wrote down; the measured numbers are in [docs/EVAL.md](https://github.com/walak-dev/ruta/blob/main/docs/EVAL.md).
 
 ## Status
 
-v0.2: engine, adapters (OpenRouter and any OpenAI-compatible API, Anthropic, Bedrock, Hugging Face, Ollama), swarm budgets, MCP server, Claude skill, 84 tests, including a labelled corpus of 385 chat messages in five languages. CI runs lint, type-checks, rebuilds every committed artifact and runs the tests on Node 18, 20 and 22. What changed: [CHANGELOG.md](CHANGELOG.md).
+v0.2: engine, adapters (OpenRouter and any OpenAI-compatible API, Anthropic, Bedrock, Hugging Face, Ollama), swarm budgets, MCP server, Claude skill, 97 tests, including a labelled corpus of 385 chat messages in five languages. CI runs lint, type-checks, rebuilds every committed artifact and runs the tests on Node 18, 20 and 22. What changed: [CHANGELOG.md](https://github.com/walak-dev/ruta/blob/main/CHANGELOG.md).
 
-Measured on held-out phrases: see [docs/EVAL.md](docs/EVAL.md).
+The numbers in [docs/EVAL.md](https://github.com/walak-dev/ruta/blob/main/docs/EVAL.md) are on the development corpus, which the rules were tuned on, so they are an upper bound. One round of held-out phrases has been measured (before its fixes); a fresh held-out round is pending.
 
 Contributions welcome, especially intent rules for more countries and languages.
 

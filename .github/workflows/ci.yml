@@ -20,6 +20,8 @@ jobs:
         run: npm run lint
       - name: Type-check the core without DOM types
         run: npm run typecheck:core
+      - name: Type-check all of src (adapters, cli) with ES2022 and Node types, no DOM
+        run: npm run typecheck:all
       - name: Rebuild every committed artifact
         run: npm run build:all
       - name: Test

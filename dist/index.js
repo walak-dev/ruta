@@ -1,4 +1,4 @@
-export { buildAudit, randomId, sha256 } from './audit.js';
+export { buildAudit, hmacSha256, randomId, sha256 } from './audit.js';
 export { catalogFromOpenRouter, catalogFromRows, DEFAULT_CAPS, DEFAULT_POLICY, DEFAULT_TIERS, EXAMPLE_CATALOG, INSTANT_LABEL, mergePolicy, } from './catalog.js';
 export { classify, isCodeTask, riskOf } from './classify.js';
 export { explain, fmtNum, riskName, taskName } from './explain.js';

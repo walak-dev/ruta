@@ -37,7 +37,7 @@ const LEX: Record<VoteLang, string> = {
     how what whats when where who why which much many some any all everything now today yesterday tomorrow also too so but
     just still yet already out up make give get got go tell check show good morning afternoon evening night an as im
     send pay transfer money dollars dollar bucks bill wallet balance account phone number top topup recharge portable
-    telephone withdraw deposit cash card credit fee order help add screen`,
+    telephone withdraw deposit cash card credit fee order help add screen wire`,
   pt: `o os as um uma uns umas de do da dos das no na nas em e ou que q para pra pro pras pros por pelo pela com sem sobre desde ate entre
     mas porque pq se nao sim nem mes dois eu tu voce voces vc vcs ele ela eles elas nos me te lhe meu minha meus minhas seu sua seus suas
     dele dela isso isto esse essa este esta aquele aquela sao sou estao estou to ta tem tenho temos ter ser foi fiz faz fazer faco vou vai
@@ -45,7 +45,8 @@ const LEX: Record<VoteLang, string> = {
     ja ainda agora hoje hj ontem amanha depois tambem tb tbm tudo todo toda todos nada algo aqui ai bem bom boa muito muita mto mais
     como quando onde quanto quanta qto qual quais quem cade so oi ola opa obrigado obrigada brigado valeu favor pfv pf dia dias tarde noite
     enviar envia envio mandar manda mando transferir transfere transferencia passa pagar paga pago pix boleto conta saldo recarga recarregar recarrega
-    celular numero telefone dinheiro reais carteira cartao retirar sacar saque depositar credito taxa pedido loja ajuda dolares dolar`,
+    celular numero telefone dinheiro reais carteira cartao retirar sacar saque depositar credito taxa pedido loja ajuda dolares dolar
+    cardapio ligar liga ligue`,
   fr: `le la les un une des du de au aux et ou est sont suis ai ont avez avons etes je tu il elle on nous vous ils elles me te se moi toi lui
     mon ma mes ton ta tes son sa ses notre votre vos nos leur ce cette ces ca cela que qui quoi quel quelle quand comment combien pourquoi
     pour par avec sans dans sur sous vers chez en y ne pas tres bien aussi encore toujours deja maintenant aujourd hui hier demain
@@ -69,7 +70,8 @@ for (const [lang, list] of Object.entries(LEX) as [VoteLang, string][]) {
   for (const w of new Set(list.split(/\s+/))) VOTES.set(w, [...(VOTES.get(w) ?? []), lang]);
 }
 
-const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+/** Bounded parts (RFC 5321 limits), so a long run with no "@" costs linear time, not quadratic. */
+const EMAIL = /[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,253}\.[A-Za-z]{2,24}/g;
 
 /** Not language, removed before the vote: [EMAIL_1] placeholders, emails, URLs and bare domains, @handles, numbers. */
 const NOT_LANGUAGE: RegExp[] = [
@@ -189,7 +191,31 @@ export function luhn(d: string): boolean {
   return sum % 10 === 0;
 }
 
-const IBAN = /\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){3,7}(?: ?[A-Z0-9]{1,3})?\b/g;
+/** Any letter case ("es91 2100 …", "De89…"); a match counts only if its ISO 13616 mod-97 checksum is valid. */
+const IBAN = /\b[A-Za-z]{2}\d{2}(?: ?[A-Za-z0-9]{4}){3,7}(?: ?[A-Za-z0-9]{1,3})?\b/g;
+/** "cvv 123", "CVC: 1234", "código de seguridad 123": the code is masked; the label stays. */
+const CVV =
+  /\b(cvv2?|cvc2?|csc|cid|c[oó]digo de seguridad|security code)(\s*[:#]?\s*)(\d{3,4})\b/gi;
+
+function ibanValid(s: string): boolean {
+  const c = s.replace(/ /g, '').toUpperCase();
+  if (c.length < 15 || c.length > 34) return false;
+  let r = 0;
+  for (const ch of c.slice(4) + c.slice(0, 4)) {
+    const v = ch >= 'A' ? ch.charCodeAt(0) - 55 : ch.charCodeAt(0) - 48;
+    r = (v > 9 ? r * 100 + v : r * 10 + v) % 97;
+  }
+  return r === 1;
+}
+
+/** The longest prefix of a candidate, ending at a group boundary, that is a valid IBAN ("…1332 hola" drops " hola"). */
+function ibanPrefix(m: string): string | null {
+  for (let end = m.length; end >= 15; end = m.lastIndexOf(' ', end - 1)) {
+    const p = m.slice(0, end);
+    if (ibanValid(p)) return p;
+  }
+  return null;
+}
 const DIGITS = /\+?\d[\d ().-]{6,24}\d/g;
 const DATE = /^(\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})$/;
 const AMOUNT_LEAD = /(recarga\w*|top ?up|reload|de|por|con|send|manda\w*)\s*$/i;
@@ -203,22 +229,34 @@ export interface Masked {
 }
 
 /**
- * Replaces phones, cards (Luhn-checked), emails and IBANs with tokens like [PHONE_1].
- * The map stays server-side; models only ever see tokens.
+ * Replaces phones, cards (Luhn-checked), emails, IBANs (checksum-validated) and card security codes
+ * with tokens like [PHONE_1]. The map stays server-side; models only ever see tokens.
+ * With `shared`, several texts (a message and its history) use one map: numbering continues from it,
+ * a value already in it keeps its token, and new tokens are added to it.
  */
-export function maskPII(input: string): Masked {
-  const map: Record<string, string> = {};
+export function maskPII(input: string, shared?: Record<string, string>): Masked {
+  const map: Record<string, string> = shared ?? {};
   const kinds = new Set<string>();
   const count: Record<string, number> = {};
+  for (const k of Object.keys(map)) {
+    const m = /^\[([A-Z]+)_(\d+)\]$/.exec(k);
+    if (m) count[m[1] as string] = Math.max(count[m[1] as string] ?? 0, Number(m[2]));
+  }
   const put = (kind: string, value: string): string => {
+    const known = Object.keys(map).find((k) => map[k] === value && k.startsWith(`[${kind}_`));
+    kinds.add(kind);
+    if (known) return known;
     count[kind] = (count[kind] ?? 0) + 1;
     const token = `[${kind}_${count[kind]}]`;
     map[token] = value;
     kinds.add(kind);
     return token;
   };
-  let text = input.replace(EMAIL, (m) => put('EMAIL', m));
-  text = text.replace(IBAN, (m) => put('IBAN', m));
+  let text = input.includes('@') ? input.replace(EMAIL, (m) => put('EMAIL', m)) : input;
+  text = text.replace(IBAN, (m) => {
+    const p = ibanPrefix(m);
+    return p ? put('IBAN', p) + m.slice(p.length) : m;
+  });
   text = text.replace(DIGITS, (m: string, offset: number, whole: string) => {
     const trimmed = m.trim();
     if (DATE.test(trimmed)) return m;
@@ -251,6 +289,9 @@ export function maskPII(input: string): Masked {
     if (d.length >= 13 && d.length <= 19 && luhn(d)) return put('CARD', trimmed);
     if (d.length >= 7 && d.length <= 15) return put('PHONE', trimmed);
     return m;
+  });
+  text = text.replace(CVV, (_m, label: string, sep: string, code: string) => {
+    return `${label}${sep}${put('CVV', code)}`;
   });
   return { text, map, kinds: [...kinds] };
 }

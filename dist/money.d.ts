@@ -35,7 +35,21 @@ export interface MoneySignals {
     /** Which rules fired, for explanations and tests. */
     why: string[];
 }
-export declare function signalsOf(toks: Tok[]): MoneySignals;
+/**
+ * `chat` (the default) adds the loose chat rules: a send whose object is implied, "everything", a repeat
+ * or a recipient. Studio, agent and API text leave them off: "send the form to the endpoint" is code.
+ */
+export declare function signalsOf(toks: Tok[], chat?: boolean): MoneySignals;
+/** A word that can make a clause a money action: a send, transfer, pay, withdraw, add, move or top-up verb, or a movement noun. */
+export declare function isMoneyWord(t: string): boolean;
+/**
+ * Is the money word at token i only the topic of a question that comes before it? True for a noun, an infinitive
+ * or gerund, a verb after "to" or "zu", or a word after an article or preposition: "cuánto cuesta enviar…",
+ * "how much does it cost to send…", "was kostet es … zu schicken", "combien coûte un virement…".
+ * False for a finite verb ("manda", "send", "überweise"): that is a request, whatever question follows.
+ * English "transfer" is a bare verb, not an infinitive, even though it ends in -er.
+ */
+export declare function isNonFinite(toks: Tok[], i: number): boolean;
 /** Signals for accent-free lowercase text (raw or already masked). */
 export declare function moneySignals(normalized: string): MoneySignals;
 /** True when a clause holds nothing but top-up details: an amount, a currency, a phone, "number is". */

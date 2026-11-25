@@ -144,6 +144,12 @@ export interface Policy {
   /** "tier": customers only ever see tier names, never vendors or models. */
   customerWording: 'tier' | 'model';
   maskPii: 'untrusted' | 'all' | 'none';
+  /**
+   * Secret key for the audit hashes of the user id, session id and message (HMAC-SHA-256).
+   * Without it they are plain SHA-256, which a dictionary can reverse for short values such as a phone number.
+   * Keep it out of the audit store; changing it starts new hashes for the same user.
+   */
+  auditSecret?: string;
   keepTurns: number;
   /** USD per crédito, for display. */
   creditUsd: number;

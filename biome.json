@@ -13,8 +13,7 @@
       "!**/dist",
       "!mcp/dist",
       "!claude/skills/ruta/scripts",
-      "!.test-build",
-      "!test/corpus"
+      "!.test-build"
     ]
   },
   "formatter": {

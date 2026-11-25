@@ -168,16 +168,31 @@ async function sha256(s) {
   }
   return toHex(sha256Bytes(bytes));
 }
-async function buildAudit(d, req, store) {
+function hmacSha256(key, message) {
+  let k = utf8(key);
+  if (k.length > 64) k = sha256Bytes(k);
+  const msg = utf8(message);
+  const inner = new Uint8Array(64 + msg.length);
+  const outer = new Uint8Array(64 + 32);
+  for (let i = 0; i < 64; i++) {
+    inner[i] = (k[i] ?? 0) ^ 54;
+    outer[i] = (k[i] ?? 0) ^ 92;
+  }
+  inner.set(msg, 64);
+  outer.set(sha256Bytes(inner), 64);
+  return toHex(sha256Bytes(outer));
+}
+async function buildAudit(d, req, store, secret) {
   const prevHash = store.lastHash();
+  const h = async (s) => secret ? hmacSha256(secret, s) : sha256(s);
   const base = {
     id: d.id,
     at: new Date(req.now ?? Date.now()).toISOString(),
     ...req.tenantId ? { tenantId: req.tenantId } : {},
-    ...req.userId ? { userHash: (await sha256(`u:${req.userId}`)).slice(0, 16) } : {},
-    ...req.sessionId ? { sessionHash: (await sha256(`s:${req.sessionId}`)).slice(0, 16) } : {},
+    ...req.userId ? { userHash: (await h(`u:${req.userId}`)).slice(0, 16) } : {},
+    ...req.sessionId ? { sessionHash: (await h(`s:${req.sessionId}`)).slice(0, 16) } : {},
     channel: req.channel ?? "app",
-    inputHash: await sha256(req.message),
+    inputHash: await h(req.message),
     path: d.path,
     task: d.triage.task,
     risk: d.triage.risk,
@@ -384,7 +399,7 @@ var LEX = {
     how what whats when where who why which much many some any all everything now today yesterday tomorrow also too so but
     just still yet already out up make give get got go tell check show good morning afternoon evening night an as im
     send pay transfer money dollars dollar bucks bill wallet balance account phone number top topup recharge portable
-    telephone withdraw deposit cash card credit fee order help add screen`,
+    telephone withdraw deposit cash card credit fee order help add screen wire`,
   pt: `o os as um uma uns umas de do da dos das no na nas em e ou que q para pra pro pras pros por pelo pela com sem sobre desde ate entre
     mas porque pq se nao sim nem mes dois eu tu voce voces vc vcs ele ela eles elas nos me te lhe meu minha meus minhas seu sua seus suas
     dele dela isso isto esse essa este esta aquele aquela sao sou estao estou to ta tem tenho temos ter ser foi fiz faz fazer faco vou vai
@@ -392,7 +407,8 @@ var LEX = {
     ja ainda agora hoje hj ontem amanha depois tambem tb tbm tudo todo toda todos nada algo aqui ai bem bom boa muito muita mto mais
     como quando onde quanto quanta qto qual quais quem cade so oi ola opa obrigado obrigada brigado valeu favor pfv pf dia dias tarde noite
     enviar envia envio mandar manda mando transferir transfere transferencia passa pagar paga pago pix boleto conta saldo recarga recarregar recarrega
-    celular numero telefone dinheiro reais carteira cartao retirar sacar saque depositar credito taxa pedido loja ajuda dolares dolar`,
+    celular numero telefone dinheiro reais carteira cartao retirar sacar saque depositar credito taxa pedido loja ajuda dolares dolar
+    cardapio ligar liga ligue`,
   fr: `le la les un une des du de au aux et ou est sont suis ai ont avez avons etes je tu il elle on nous vous ils elles me te se moi toi lui
     mon ma mes ton ta tes son sa ses notre votre vos nos leur ce cette ces ca cela que qui quoi quel quelle quand comment combien pourquoi
     pour par avec sans dans sur sous vers chez en y ne pas tres bien aussi encore toujours deja maintenant aujourd hui hier demain
@@ -415,7 +431,7 @@ var VOTES = /* @__PURE__ */ new Map();
 for (const [lang, list] of Object.entries(LEX)) {
   for (const w of new Set(list.split(/\s+/))) VOTES.set(w, [...VOTES.get(w) ?? [], lang]);
 }
-var EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+var EMAIL = /[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,253}\.[A-Za-z]{2,24}/g;
 var NOT_LANGUAGE = [
   /\[[A-Z]+_\d+\]/g,
   EMAIL,
@@ -499,24 +515,52 @@ function luhn(d) {
   }
   return sum % 10 === 0;
 }
-var IBAN = /\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){3,7}(?: ?[A-Z0-9]{1,3})?\b/g;
+var IBAN = /\b[A-Za-z]{2}\d{2}(?: ?[A-Za-z0-9]{4}){3,7}(?: ?[A-Za-z0-9]{1,3})?\b/g;
+var CVV = /\b(cvv2?|cvc2?|csc|cid|c[oó]digo de seguridad|security code)(\s*[:#]?\s*)(\d{3,4})\b/gi;
+function ibanValid(s) {
+  const c = s.replace(/ /g, "").toUpperCase();
+  if (c.length < 15 || c.length > 34) return false;
+  let r = 0;
+  for (const ch of c.slice(4) + c.slice(0, 4)) {
+    const v = ch >= "A" ? ch.charCodeAt(0) - 55 : ch.charCodeAt(0) - 48;
+    r = (v > 9 ? r * 100 + v : r * 10 + v) % 97;
+  }
+  return r === 1;
+}
+function ibanPrefix(m) {
+  for (let end = m.length; end >= 15; end = m.lastIndexOf(" ", end - 1)) {
+    const p = m.slice(0, end);
+    if (ibanValid(p)) return p;
+  }
+  return null;
+}
 var DIGITS = /\+?\d[\d ().-]{6,24}\d/g;
 var DATE = /^(\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})$/;
 var AMOUNT_LEAD = /(recarga\w*|top ?up|reload|de|por|con|send|manda\w*)\s*$/i;
 var AMOUNT_TRAIL = /^\s?(?:[$€£]|(?:usd|eur|euros?|d[oó]lar(?:es)?|dollars?|bucks|pesos?|reais|soles|cup|mxn|bs|fcfa|francs?)\b)/i;
-function maskPII(input) {
-  const map = {};
+function maskPII(input, shared) {
+  const map = shared ?? {};
   const kinds = /* @__PURE__ */ new Set();
   const count2 = {};
+  for (const k of Object.keys(map)) {
+    const m = /^\[([A-Z]+)_(\d+)\]$/.exec(k);
+    if (m) count2[m[1]] = Math.max(count2[m[1]] ?? 0, Number(m[2]));
+  }
   const put = (kind, value) => {
+    const known = Object.keys(map).find((k) => map[k] === value && k.startsWith(`[${kind}_`));
+    kinds.add(kind);
+    if (known) return known;
     count2[kind] = (count2[kind] ?? 0) + 1;
     const token = `[${kind}_${count2[kind]}]`;
     map[token] = value;
     kinds.add(kind);
     return token;
   };
-  let text2 = input.replace(EMAIL, (m) => put("EMAIL", m));
-  text2 = text2.replace(IBAN, (m) => put("IBAN", m));
+  let text2 = input.includes("@") ? input.replace(EMAIL, (m) => put("EMAIL", m)) : input;
+  text2 = text2.replace(IBAN, (m) => {
+    const p = ibanPrefix(m);
+    return p ? put("IBAN", p) + m.slice(p.length) : m;
+  });
   text2 = text2.replace(DIGITS, (m, offset, whole) => {
     const trimmed = m.trim();
     if (DATE.test(trimmed)) return m;
@@ -537,6 +581,9 @@ function maskPII(input) {
     if (d.length >= 7 && d.length <= 15) return put("PHONE", trimmed);
     return m;
   });
+  text2 = text2.replace(CVV, (_m, label, sep, code) => {
+    return `${label}${sep}${put("CVV", code)}`;
+  });
   return { text: text2, map, kinds: [...kinds] };
 }
 function unmask(text2, map) {
@@ -556,7 +603,7 @@ function clock() {
 }
 
 // src/money.ts
-var TOKEN = /\[(?:email|phone|card|iban)_\d+\]|\d+(?:[.,:]\d+)*|[a-z]+|[$€£]|[?!.;,\n]/g;
+var TOKEN = /\[(?:email|phone|card|iban|cvv)_\d+\]|\d+(?:[.,:]\d+)*|[a-z]+|[$€£]|[?!.;,\n]/g;
 function moneyView(normalized) {
   return norm(maskPII(normalized).text).replace(/ß/g, "ss");
 }
@@ -572,8 +619,26 @@ function tokenize(view) {
 var set = (s) => new Set(s.split(/\s+/).filter(Boolean));
 var rx = (s) => new RegExp(`^(?:${s.trim().split(/\s+/).join("|")})$`);
 var SEND = rx(
-  String.raw`mand[aeo]\w* envi[aeo]\w* pas[ae](?:le|les|me|melo|selo|sela|nos)\w* pass[ae] passar send\w* sent schick\w* envo[iy]\w*`
+  String.raw`mand[aeo]\w* envi[aeo]\w* reenvi\w* pas[ae](?:le|les|me|melo|selo|sela|nos)\w* pass[ae] passar send\w* resend\w* sent schick\w* envo[iy]\w* renvo[iy]\w*`
 );
+var SEND_PAST = rx(
+  String.raw`sent mand(?:e|ei|o|ou|aste|aron|ado|ada|ados|adas) envi(?:e|ei|o|ou|aste|aron|ado|ada|ados|adas) envoye\w* geschickt gesendet passei passou`
+);
+var SEND_CLITIC = /(?:lo|la|los|las|le|les|selo|sela|selos|selas|melo|mela)$/;
+var PRONOUN = set(
+  "it them that this lo la le les los las ele ela eles elas o a es das ihn ihm ihr sie ca cela"
+);
+var NOT_MONEY_OBJ = set(`saludos saludo saludito besos beso abrazo abrazos foto fotos imagen captura pantallazo video audio nota mensaje mensajes
+  catalogo menu carta ubicacion direccion link enlace info informacion detalles datos documento documentos archivo pdf lista precios
+  factura recibo comprobante ticket codigo pedido paquete encomienda tarea correo email mail contrasena clave
+  greetings regards love hug hugs photo photos picture pic pics image screenshot message messages text catalog catalogue
+  location address directions details data document file files list prices invoice receipt code order package parcel homework password
+  cardapio endereco localizacao mensagem imagem arquivo recibo boleto beijos abraco abracos recado recados aviso comprovante comprovantes
+  bonjour bises bisous salutations amities photo photos adresse localisation lien liste prix facture recu commande colis
+  grusse gruesse gruss foto bild bilder adresse standort nachricht datei liste preise rechnung beleg bestellung paket katalog`);
+var REPEAT_STRONG = /\b(?:otr[oa] (?:igual|mas)|outr[oa] (?:igual|mais)|mais uma?|lo mismo|la misma|o mesmo|a mesma|same again|another one|one more|une? autre|la meme chose|pareil|nochmal|noch ?einmal|nochmals|dasselbe|das ?selbe|das gleiche)\b/;
+var REPEAT_WEAK = /\b(?:again|de nuevo|otra vez|de novo|outra vez|encore|the same|wieder|ultim[oa]|last one|dernier|letzte\w*)\b/;
+var MOVE = rx(String.raw`move[sd]? moving mueve\w* mover\w* muev\w*`);
 var GIVE = rx("da(?:le|les|me|selo|rle|rles) dele denle give giving gib gebe geben donne[zr]?");
 var MINE = set("mi mis my meu minha mon ma mes mein meine meinen");
 var XFER = rx(
@@ -617,7 +682,7 @@ var CURRENCY = set(`usd eur mxn cup mlc cop ars brl pen bob clp pyg uyu gtq hnl 
   guarani guaranies quetzal quetzales colones cordobas gourde gourdes franc francs franco francos balles conto contos centavos cents
   pound pounds libras lucas pavos varos bolivares`);
 var ALL = set(
-  "todo toda todito tudo all everything tout toute alles ganze ganzes ganzen gesamte gesamtes entire whole resto rest reste"
+  "todo toda todito tudo all everything tout toute alles ganze ganzes ganzen gesamte gesamtes entire whole resto rest reste mitad half metade moitie halfte haelfte"
 );
 var PREP = set("a al para pa to for pra pro ao pour au aux vers an fur fuer nach sur auf");
 var ME = set("me moi mich nos us");
@@ -638,7 +703,13 @@ var NOT_AMOUNT_AFTER = rx(
   String.raw`h hs hrs am pm uhr horas? hours? heures? stunden? minut\w* min seg segundos? seconds? secs? sekunden? secondes? dias? days? jours? tage? tagen semanas? weeks? mes meses months? anos? years? veces vez times fois mal`
 );
 var NOT_AMOUNT_BEFORE = set(
-  "pedido orden order ticket codigo code bestellung commande referencia reference ref nro las at um"
+  "pedido orden order ticket codigo code bestellung commande referencia reference ref nro las as at um vers"
+);
+var DET = set(
+  "el la los las un una mi mis tu su sus the my a an your his her this that o os um uma meu minha seu sua mon ma le les une mein meine der die das den dem ein eine"
+);
+var NOUN_FORM = rx(
+  "pagos? pagamentos? payments? retiros? saques? depositos? deposits? withdrawals? zahlungs?"
 );
 var THOUSAND = set("mil k thousand mille tausend");
 var LAD = set("lad lade");
@@ -658,7 +729,7 @@ function clauses(toks) {
   if (cur.length) out.push(cur);
   return out;
 }
-function signalsOf(toks) {
+function signalsOf(toks, chat = true) {
   const w = (i) => {
     const x = toks[i];
     return x && x.k === "word" ? x.t : "";
@@ -706,34 +777,67 @@ function signalsOf(toks) {
   const phone = has2(PHONE_NOUN) || toks.some((x) => x.k === "pii" && x.t.startsWith("[phone"));
   const all = has2(ALL);
   const human = toks.some((x) => x.k === "word" && HUMAN.test(x.t));
-  const closes = (i, particle) => {
-    let last = "";
-    for (let j = i + 1; j < toks.length && kind(j) !== "break"; j++)
-      if (w(j) && !POLITE.has(w(j))) last = w(j);
-    return last === particle;
+  const lastAfter = new Array(toks.length);
+  let lastWord = "";
+  for (let j = toks.length - 1; j >= 0; j--) {
+    lastAfter[j] = lastWord;
+    if (kind(j) === "break") lastWord = "";
+    else if (w(j) && !POLITE.has(w(j)) && lastWord === "") lastWord = w(j);
+  }
+  const closes = (i, particle) => lastAfter[i] === particle;
+  const said = toks.filter((x) => x.k === "word").map((x) => x.t).join(" ");
+  const repeatStrong = REPEAT_STRONG.test(said);
+  const repeat = repeatStrong || REPEAT_WEAK.test(said);
+  const sendLoose = (i) => {
+    const t = w(i);
+    if (SEND_PAST.test(t)) return false;
+    const obj = [];
+    let toWhom = false;
+    for (let j = i + 1; j < Math.min(toks.length, i + 7) && kind(j) !== "break"; j++) {
+      if (isRecipient(j) && !NOT_MONEY_OBJ.has(w(j + 1))) {
+        toWhom = true;
+        break;
+      }
+      if (w(j)) obj.push(w(j));
+    }
+    if (!lastAfter[i]) {
+      for (let j = i - 1; j >= Math.max(0, i - 6) && kind(j) !== "break"; j--)
+        if (w(j)) obj.push(w(j));
+    }
+    if (obj.some((o) => NOT_MONEY_OBJ.has(o))) return false;
+    const content = obj.filter((o) => !POLITE.has(o) && !ME.has(o) && o !== "mir" && o !== "uns");
+    const first = content[0] ?? "";
+    const after = content[1] ?? "";
+    const pronoun = PRONOUN.has(first) && (!after || PREP.has(after) || REPEAT_WEAK.test(after));
+    return SEND_CLITIC.test(t) || pronoun || obj.some((o) => ALL.has(o)) || repeat || toWhom;
   };
   let send = false, sendTopup = false, xfer = false, pay = false, cash = false, cashWeak = false;
-  let generic = false, topupTok = false, noun = false, doNoun = false;
+  let generic = false, topupTok = false, noun = false, doNoun = false, loose = false, move = false;
   const excused = [];
   for (let i = 0; i < toks.length; i++) {
     const t = w(i);
     if (!t) continue;
     const enNoun = t === "transfer" && EN_DET.has(w(i - 1));
+    const detNoun = DET.has(w(i - 1)) && NOUN_FORM.test(t);
     if (GIVE.test(t)) send = true;
     if (SEND.test(t)) {
       const object = [w(i + 1), w(i + 2), w(i + 3)];
       if (object.some((o) => AIRTIME.has(o) || TOPUP.test(o)) && !object.some((o) => MINE.has(o)))
         sendTopup = true;
-      else send = true;
+      else {
+        send = true;
+        if (chat && !loose && sendLoose(i)) loose = true;
+      }
     }
+    if (MOVE.test(t)) move = true;
     if (XFER.test(t) && !enNoun) {
       const clitic = /^tra(?:n)?sf\w+[aeir]n?(?:me|nos)$/.test(t);
       if (!worth && (clitic || ME.has(w(i - 1)) || ME.has(w(i + 1)) || human)) excused.push(t);
       else xfer = true;
     }
-    if (PAY.test(t) && !PAY_IDIOM.has(w(i + 1)) && !(w(i + 1) === "a" && w(i + 2) === "visit"))
+    if (PAY.test(t) && !detNoun && !PAY_IDIOM.has(w(i + 1)) && !(w(i + 1) === "a" && w(i + 2) === "visit"))
       pay = true;
-    if (CASH.test(t) && (worth || !(ME.has(w(i + 1)) || /^retir\w*[aeir]n?(?:me|nos)$/.test(t))))
+    if (CASH.test(t) && !detNoun && (worth || !(ME.has(w(i + 1)) || /^retir\w*[aeir]n?(?:me|nos)$/.test(t))))
       cash = true;
     if (t === "cash" && (w(i + 1) === "out" || w(i + 2) === "out")) cash = true;
     if (HEB.has(t) && closes(i, "ab")) cash = true;
@@ -741,7 +845,7 @@ function signalsOf(toks) {
     if (GENERIC.test(t)) generic = true;
     if (TOPUP.test(t) || t === "top" && w(i + 1) === "up" || LAD.has(t) && closes(i, "auf"))
       topupTok = true;
-    if (ACTION_NOUN.test(t) || enNoun) {
+    if (ACTION_NOUN.test(t) || enNoun || detNoun) {
       noun = true;
       if (DO.test(w(i - 1)) || DO.test(w(i - 2)) || DO.test(w(i - 3))) doNoun = true;
     }
@@ -749,7 +853,10 @@ function signalsOf(toks) {
   const airtimeAdd = generic && airtime;
   const topupLex = (topupTok || sendTopup) && !has2(TOPUP_NOT);
   const rules = [
-    ["send", send && (worth || funds || all && recipient)],
+    ["send", send && (worth || funds || all && recipient || loose)],
+    ["move", move && (worth || funds || all || account)],
+    // "faz outro igual" after "meu pix chegou?": repeat the last movement.
+    ["repeat", chat && repeatStrong && (noun || topupTok)],
     ["transfer", xfer],
     ["pay", pay],
     ["withdraw_deposit", cash || cashWeak && (worth || funds || account || all)],
@@ -764,7 +871,7 @@ function signalsOf(toks) {
   const why = rules.filter(([, on]) => on).map(([name]) => name);
   const fired = (name) => why.includes(name);
   const topupWord = (topupLex || airtimeAdd) && !account;
-  const other = fired("send") || fired("transfer") || fired("pay") || fired("withdraw_deposit") || fired("movement_noun") || fired("add_funds") && !topupWord || fired("amount_recipient") && !topupWord || (topupLex || airtimeAdd) && account;
+  const other = fired("send") || fired("move") || fired("repeat") || fired("transfer") || fired("pay") || fired("withdraw_deposit") || fired("movement_noun") || fired("add_funds") && !topupWord || fired("amount_recipient") && !topupWord || (topupLex || airtimeAdd) && account;
   return {
     action: why.length > 0,
     topupWord,
@@ -775,6 +882,21 @@ function signalsOf(toks) {
     excused,
     why
   };
+}
+function isMoneyWord(t) {
+  return [SEND, GIVE, XFER, PAY, CASH, CASH_WEAK, GENERIC, TOPUP, ACTION_NOUN, MOVE].some(
+    (re) => re.test(t)
+  );
+}
+var OF = set("por de del of par per com con with avec mit via en in by sin sem sans ohne");
+var NON_FINITE = /^(?:\w{2,}(?:ar|er|ir)(?:le|les|lo|la|los|las|me|te|se|nos|selo|sela)?|\w{2,}(?:ando|iendo|endo|indo|ing)(?:le|lo|la|me|se)?|\w+zu\w{3,})$/;
+function isNonFinite(toks, i) {
+  const t = toks[i]?.t ?? "";
+  const prev = toks[i - 1]?.k === "word" ? toks[i - 1].t : "";
+  if (ACTION_NOUN.test(t) || NOUN_FORM.test(t)) return true;
+  if (prev === "to" || prev === "zu" || DET.has(prev) || PREP.has(prev) || OF.has(prev))
+    return true;
+  return NON_FINITE.test(t) && !/^tra\w*fer$/.test(t);
 }
 function moneySignals(normalized) {
   return signalsOf(tokenize(moneyView(normalized)));
@@ -920,16 +1042,38 @@ var RISK_ORDER = [
   "none"
 ];
 var text = (toks) => toks.map((x) => x.t).join(" ");
+function onlyAsks(c) {
+  const said = text(c);
+  const m = INFO.exec(said);
+  if (!m) return false;
+  const sig = signalsOf(c);
+  if (!sig.action) return true;
+  const at = said.slice(0, m.index).split(" ").length - 1;
+  for (let i = 0; i < c.length; i++) {
+    const x = c[i];
+    if (i < at && sig.amountToRecipient && (x.k === "num" || x.k === "pii")) return false;
+    if (x.k === "word" && isMoneyWord(x.t) && (i < at || !isNonFinite(c, i))) return false;
+  }
+  return true;
+}
+var HEAD_CHARS = 48e3;
+var TAIL_CHARS = 16e3;
+var bounded = (s) => s.length <= HEAD_CHARS + TAIL_CHARS ? s : `${s.slice(0, HEAD_CHARS)} . ${s.slice(-TAIL_CHARS)}`;
 function isMoney(normalized, channel) {
-  const toks = tokenize(moneyView(normalized));
-  const whole = signalsOf(toks);
+  const chat = CHAT_CHANNELS.includes(channel);
+  const toks = tokenize(moneyView(bounded(normalized)));
+  const whole = signalsOf(toks, chat);
   const word = (t, excused) => MONEY.test(
     excused.length ? t.split(" ").filter((x) => !excused.includes(x)).join(" ") : t
   );
-  if (!CHAT_CHANNELS.includes(channel)) return whole.action || MONEY.test(normalized);
+  if (!chat) return whole.action || MONEY.test(normalized);
   if (DISPUTE.test(normalized) && (whole.action || word(text(toks), whole.excused))) return true;
   const asked = [];
-  for (const c of clauses(toks)) if (!INFO.test(text(c))) asked.push(...c, { t: ".", k: "break" });
+  for (const c of clauses(toks)) {
+    if (onlyAsks(c)) continue;
+    for (const x of c) asked.push(x);
+    asked.push({ t: ".", k: "break" });
+  }
   const sig = signalsOf(asked);
   return sig.action || word(text(asked), sig.excused);
 }
@@ -1226,8 +1370,38 @@ function toLogRecord(d) {
 // src/rules.ts
 var CHAT_CHANNELS2 = ["whatsapp", "sms", "app", "web"];
 var set2 = (s) => new Set(s.split(/\s+/).filter(Boolean));
-var GREET = /^(hola+|holi|buenas|buen dia|buenos dias|buenas tardes|buenas noches|hello+|hi|hey+|good (?:morning|afternoon|evening)|ola+|oi+|opa|bom dia|boa tarde|boa noite|bonjour|bonsoir|bjr|bsr|slt|salut|coucou|bonjou|alo|que tal|hallo+|guten (?:morgen|tag|abend)|moin|servus)( [a-z]+){0,2}$/;
-var THANKS = /^(?:(?:ok|okay|oki|vale|listo|perfecto|super|genial|great|cool|parfait|prima|blz|beleza) )?(muchas gra[cs]ias|mil gra[cs]ias|gra[cs]ias|thanks|thank you|thx|ty|(?:muito )?o?brigad(?:o|a|ao|inho)|valeu|merci|mrc|mesi|danke(?: ?schon| sehr)?|vielen dank|besten dank)( [a-z]+){0,3}$/;
+var GREET_HEAD = /^(?:hola+|holi|holis|buenas+|buenos|buen|hello+|hi+|hey+|heya|hiya|good|ola+|oi+|opa|eai|eae|bom|boa|bonjour|bonsoir|bjr|bsr|slt|salut|coucou|bonjou|alo+|hallo+|halo|guten|moin|servus|saludos|quiubo|wassup|whatsup|sup|tal|onda|hubo)$/;
+var ADDRESS = set2(`a todos todas the there everyone everybody all guys team folks people friend friends buddy bro man mi my meu minha mon ma
+  amigo amiga amigos amigas hermano hermana hermanito mano pana senor senora senorita jefe joven chicos gente equipo querido querida
+  pessoal galera moco moca tous tout le monde les amis ami zusammen leute alle freunde liebe lieber de nuevo again`);
+var POLITE_WORDS = set2(
+  "por favor porfa porfavor xfa pls plz please plis pfv pf svp stp bitte ok okay"
+);
+var GREET_WORDS = set2(`que q tal onda hubo dia dias tarde tardes noche noches morning afternoon evening day night tudo bem bom beleza blz td
+  noite manha morgen tag abend bonne journee soiree nuit e ai y
+  ca va comment wie gehts geht s es dir ihnen how are you u doing como estas esta estan vai vamos`);
+var THANKS_HEAD = /^(?:gra[cs]ias?|grax|grcs|thanks|thank|thanx|thx|ty|tks|o?brigad(?:o|a|ao|inho|inha)|obg|obgd|valeu|vlw|merci|mrc|mersi|mesi|danke|dankeschon|dank)$/;
+var THANKS_WORDS = set2(`muchas muchisimas mil so much very lot a bunch tons million muito muita mto mt beaucoup bcp infiniment vielen besten herzlichen
+  recht sehr schon tausend you u ok okay oki vale listo perfecto super genial great cool perfect awesome nice excellent parfait prima
+  blz beleza top es muy amable c est gentil sympa re the best eres lo maximo ajudou ajudaram ayudaste ayudo helped geholfen me mir hast`);
+var THANKS_FOR = set2("por for pela pelo pour fur fuer per");
+var THANKS_OBJ = set2(`la el los las the your tu su a o os as l le les die den das deine ihre todo everything all tudo tout alles
+  recarga ayuda help info informacion atencion paciencia servicio service rapidez respuesta ajuda atencao servico resposta
+  aide attention patience reponse hilfe geduld antwort`);
+function onlyGreeting(letters) {
+  const t = letters.split(" ").filter(Boolean);
+  return t.length > 0 && t.some((x) => GREET_HEAD.test(x)) && t.every(
+    (x) => GREET_HEAD.test(x) || GREET_WORDS.has(x) || ADDRESS.has(x) || POLITE_WORDS.has(x)
+  );
+}
+function onlyThanks(letters) {
+  const t = letters.split(" ").filter(Boolean);
+  const cut = t.findIndex((x) => THANKS_FOR.has(x));
+  const head = cut < 0 ? t : t.slice(0, cut);
+  const tail = cut < 0 ? [] : t.slice(cut + 1);
+  const ok = (x) => THANKS_HEAD.test(x) || THANKS_WORDS.has(x) || ADDRESS.has(x) || POLITE_WORDS.has(x);
+  return head.some((x) => THANKS_HEAD.test(x)) && head.every(ok) && tail.every((x) => THANKS_OBJ.has(x) || POLITE_WORDS.has(x));
+}
 var THANKS_LEAD = /^(?:muchas |mil |muito |vielen )?(?:gra[cs]ias|thanks|thank you|thx|o?brigad\w*|valeu|merci|danke\w*|dank)\b/;
 var TASK_VERB = /\b(traduc\w*|translat\w*|resume\w*|resumen|summar\w*|escribe\w*|redacta\w*|write|compara\w*|compare\w*|explica\w*|explain\w*|analiza\w*|analy[sz]\w*|clasifica\w*|classif\w*|disena\w*|design\w*|genera\w*|generate\w*|recomiend\w*|recommend\w*)\b/;
 var TOPUP_EXCLUDE = /\b(reembols\w*|devolucion\w*|refund\w*|rembours\w*|erstatt\w*|estorn\w*|cobr\w*|charged|dos veces|twice|cuanto cuesta|precio\w*|cuanto sale|tarifa\w*|how much|price\w*|quanto custa|combien coute|was kostet|no ha llegado|no llego|no llega|problem\w*|queja\w*|reclam\w*|error\w*|fehler|cancel\w*|storn\w*|annul\w*|llego|estado|status|statut|donde esta|where is|arriv\w*|go thr\w+|went thr\w+|caiu|chegou|cade|passee?|angekommen|tracking|compar\w*|cost\w*|diferencia\w*|conviene|explica\w*|como funciona|por que|recomiend\w*|que es|fees?|frais|taxas?|gebue?hr\w*|kosten|kostet|coute|custa|limit\w*|how (?:do|does|can|long)|comment|wie (?:hoch|lange|funktioniert|kann)|como (?:hago|puedo|faco|posso)|cuanto (?:tarda|demora)|quanto tempo)\b/;
@@ -1239,19 +1413,38 @@ var COMMON = set2(`por favor porfa porfavor xfa pls plz please plis pfv pf svp s
   puedes puede podrias podria can could kannst konntest peux peut pouvez pode consegue
   dime dices dice decir decirme ver saber consultar consulta revisar revisa muestra muestrame mostrar check show tell see know view
   voir savoir connaitre consulter montre dis dire zeig zeige zeigen anzeigen sagen sag wissen sehen ve mostra
-  cual cuanto cuanta que es esta what whats is s how much many do quel quelle est c d l quoi combien wie viel wieviel ist was qual quanto qto e si if se ob`);
+  cual cuanto cuanta que es esta what whats is s how much many do quel quelle est c d l quoi combien wie viel wieviel ist was qual quanto qto e si if se ob
+  oye oiga mira che ey epa eh ei olha dis hm`);
 var BALANCE_NOUN = set2("saldo balance solde kontostand guthaben");
 var BALANCE_WORDS = set2(`tengo queda quedan have left remaining tenho resta sobrou ai reste hab habe ubrig noch disponible available disponivel verfugbar
-  billetera cuenta monedero wallet account carteira conta portefeuille compte konto dinero plata money dinheiro argent geld credito credit`);
-var HOW_MUCH = /\b(cuant[oa]|how much|combien|wie ?viel|quanto|qto)\b/;
+  billetera cuenta monedero wallet account carteira conta portefeuille compte konto dinero plata money dinheiro argent geld credito credit hoch`);
+var HOW_MUCH = /\b(cuant[oa]|how much|combien|wie ?viel|wie hoch|quanto|qto)\b/;
+var WANT = set2(
+  "quiero quisiera queria necesito want wanna need veux voudrais mochte moechte will preciso gostaria"
+);
+var LOOKUP = /\b(ver|saber|consultar|consulta|revisar|revisa|muestra\w*|mostrar|check|show|tell|see|know|view|voir|savoir|connaitre|consulter|montre|dire|zeig\w*|anzeigen|sagen|sag|wissen|sehen|mostra|dime|decir\w*|dices|cual|what|whats|quel|quelle|qual|wie|was)\b/;
 var HAVE = /\b(tengo|queda|quedan|have|tenho|resta|reste|hab|habe)\b/;
 var STATUS_WORDS = set2(`recarga envio remesa transferencia pedido orden order top up topup giro paquete transfer money dinero plata pix deposito pago dinheiro
   transfert virement recharge commande argent colis uberweisung ueberweisung aufladung bestellung geld paket zahlung encomenda compra
   llego llegado llega ha aun todavia estado status statut donde where arrived arrive go went gone through thru tracking rastreo caiu chegou cade foi
   arrive arrivee passe passee ou angekommen bleibt ausgefuhrt ausgefuehrt eingegangen wo wurde did has como va ce
   ya yet already ja schon deja encore pas bien hoy ayer today yesterday hier gestern ontem hj hoje manana morning this matin heute
-  q hice hizo fiz made no not nao nicht hasn didn isn t`);
-var STATUS_OBJ = /\b(recarga|envio|remesa|transferencia|pedido|orden|order|top ?up|giro|paquete|transfer|money|dinero|plata|pix|deposito|pago|dinheiro|transfert|virement|recharge|commande|argent|colis|ue?berweisung|aufladung|bestellung|geld|paket|zahlung|encomenda|compra)\b/;
+  q hice hizo fiz made no not nao nicht hasn didn isn t
+  payment payments pagos mande mandei mandaste envie enviei enviaste sent envoye geschickt gesendet`);
+var STATUS_OBJ = /\b(recarga|envio|remesa|transferencia|pedido|orden|order|top ?up|giro|paquete|transfer|money|dinero|plata|pix|deposito|pagos?|payments?|dinheiro|transfert|virement|recharge|commande|argent|colis|ue?berweisung|aufladung|bestellung|geld|paket|zahlung|encomenda|compra)\b/;
+var TO = set2("a al to para pra pro ao an fur fuer pour");
+var OWNER = set2("mi my meu minha mon ma mein meine meinem meiner su sua seu");
+function withoutRecipient(toks) {
+  for (let i = 0; i < toks.length - 1; i++) {
+    if (!(toks[i]?.k === "word" && TO.has(toks[i].t))) continue;
+    let j = i + 1;
+    if (toks[j]?.k === "word" && OWNER.has(toks[j].t)) j++;
+    const name = toks[j];
+    if (name?.k === "word" && !COMMON.has(name.t) && !STATUS_WORDS.has(name.t) && !isMoneyWord(name.t) && !/^(?:todo|toda|tudo|all|everything|tout|alles|resto|rest|reste)$/.test(name.t))
+      return [...toks.slice(0, i), ...toks.slice(j + 1)];
+  }
+  return toks;
+}
 var STATUS_Q = /\b(llego|llegado|no llega|estado|status|statut|donde esta|where is|arrived?|go(?:ne)? thr(?:ough|u)|went thr(?:ough|u)|como va|caiu|chegou|cade|ja foi|arrivee?|passee?|ou en est|angekommen|wo (?:ist|bleibt)|ausgefu(?:e)?hrt|eingegangen|tracking|rastreo)\b/;
 function only(toks, ...lists) {
   return toks.every((x) => x.k === "break" || x.k === "word" && lists.some((l) => l.has(x.t)));
@@ -1260,11 +1453,14 @@ var joined = (toks) => toks.filter((x) => x.k === "word").map((x) => x.t).join("
 function isBalance(toks) {
   const t = joined(toks);
   const core = toks.some((x) => BALANCE_NOUN.has(x.t)) || HOW_MUCH.test(t) && HAVE.test(t);
+  const wants = toks.some((x) => WANT.has(x.t));
+  if (wants && !LOOKUP.test(t) && !HOW_MUCH.test(t)) return false;
   return core && only(toks, COMMON, BALANCE_NOUN, BALANCE_WORDS);
 }
 function isStatus(toks) {
-  const t = joined(toks);
-  return STATUS_OBJ.test(t) && STATUS_Q.test(t) && only(toks, COMMON, STATUS_WORDS);
+  const rest = withoutRecipient(toks);
+  const t = joined(rest);
+  return STATUS_OBJ.test(t) && STATUS_Q.test(t) && only(rest, COMMON, STATUS_WORDS);
 }
 var CURRENCY2 = [
   [/\b(usd|dolares?|dollars?)\b|\$/, "USD"],
@@ -1309,6 +1505,8 @@ function jaccard(a, b) {
   const union = a.size + b.size - inter;
   return union === 0 ? 0 : inter / union;
 }
+var FAQ_FILLER = set2(`hola buenas buenos hello hey please favor porfa porfavor pls plz plis bitte svp stp gracias thanks merci danke obrigado obrigada
+  ustedes usted vos you hoy today ahora now aqui here dime tell sabes saben know oye amigo ola bom boa bonjour hallo vous aujourd hui heute hoje`);
 function matchFaq(message, faq, threshold = 0.5) {
   const a = contentWords(norm(message));
   if (a.size === 0) return null;
@@ -1323,7 +1521,9 @@ function matchFaq(message, faq, threshold = 0.5) {
       }
     }
   }
-  return score >= threshold ? best : null;
+  if (!best || score < threshold) return null;
+  const known = new Set(best.q.flatMap((q) => [...contentWords(norm(q))]));
+  return [...a].every((x) => known.has(x) || FAQ_FILLER.has(x)) ? best : null;
 }
 function money(n) {
   return Number.isInteger(n) ? String(n) : n.toFixed(2);
@@ -1389,8 +1589,9 @@ function instantRules(message, ctx) {
   return r ? { ...r, needsHandler: NEEDS_HANDLER[r.kind] } : null;
 }
 function matchInstant(message, ctx) {
-  const n = norm(message);
   const w = words(message);
+  if (w.length > 30) return null;
+  const n = norm(message);
   const masked = maskPII(message);
   const toks = tokenize(norm(masked.text).replace(/ß/g, "ss"));
   const sig = signalsOf(toks);
@@ -1401,13 +1602,13 @@ function matchInstant(message, ctx) {
   const balance = chat && plain && w.length <= 12 && isBalance(toks);
   const letters = n.replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
   const intent = status || balance || masked.kinds.length > 0 || /\d/.test(n);
-  if (!blocked && !intent && w.length <= 5 && GREET.test(letters)) {
+  if (!blocked && !intent && w.length <= 5 && onlyGreeting(letters)) {
     return {
       kind: "greeting",
       answer: { es: "\xA1Hola! \xBFEn qu\xE9 te ayudo?", en: "Hi! How can I help?" }
     };
   }
-  if (!blocked && !intent && w.length <= 6 && THANKS.test(letters)) {
+  if (!blocked && !intent && w.length <= 6 && onlyThanks(letters)) {
     return { kind: "thanks", answer: { es: "\xA1Con gusto!", en: "You're welcome!" } };
   }
   if (!chat) return null;
@@ -1774,7 +1975,7 @@ function createRuta(cfg = {}) {
       shadow: P.shadow
     };
     const full = d;
-    full.audit = await buildAudit(d, req, store);
+    full.audit = await buildAudit(d, req, store, P.auditSecret);
     full.thinkMs = clock() - start;
     full.explain = explain(full, P);
     return full;
@@ -2113,7 +2314,13 @@ function createRuta(cfg = {}) {
     const d = await decide(req, opts.override);
     const L = langKey(d.triage.lang);
     if (d.path === "instant")
-      return { decision: d, text: d.instant?.answer[L] ?? "", costUsd: 0, attempts: [] };
+      return {
+        decision: d,
+        text: d.instant?.answer[L] ?? "",
+        costUsd: 0,
+        attempts: [],
+        ...d.instant?.needsHandler ? { needsHandler: true } : {}
+      };
     if (d.path === "cache") return { decision: d, text: d.cached ?? "", costUsd: 0, attempts: [] };
     if (d.path === "refuse")
       return { decision: d, text: d.explain.customer[L], costUsd: 0, refused: true, attempts: [] };
@@ -2122,6 +2329,8 @@ function createRuta(cfg = {}) {
       ...d.escalation
     ];
     const hist = (req.history ?? []).slice(-policy.keepTurns);
+    const tokens = { ...d.masked?.map ?? {} };
+    const maskedHist = hist.map((t) => ({ ...t, content: maskPII(t.content, tokens).text }));
     const system = [req.system, d.directive?.[L]].filter((x) => !!x).join("\n\n") || void 0;
     const attempts = [];
     let spent = 0;
@@ -2132,7 +2341,7 @@ function createRuta(cfg = {}) {
         attempts.push({ ...step, ok: false, costUsd: 0, error: "no_adapter" });
         continue;
       }
-      const mask = !!d.masked && (policy.maskPii === "all" || policy.maskPii === "untrusted" && !spec.local && !spec.zeroDataRetention);
+      const mask = policy.maskPii === "all" || policy.maskPii === "untrusted" && !spec.local && !spec.zeroDataRetention;
       const content = mask && d.masked ? d.masked.text : req.message;
       const stepDecision = {
         ...d,
@@ -2144,12 +2353,12 @@ function createRuta(cfg = {}) {
         const r = await adapter({
           model: step.model,
           ...system ? { system } : {},
-          messages: [...hist, { role: "user", content }],
+          messages: [...mask ? maskedHist : hist, { role: "user", content }],
           maxOutputTokens: d.maxOutputTokens,
           ...req.sessionId ? { sessionId: req.sessionId } : {},
           ...opts.user ? { user: opts.user } : {}
         });
-        const text2 = mask && d.masked ? unmask(r.text, d.masked.map) : r.text;
+        const text2 = mask ? unmask(r.text, tokens) : r.text;
         const cost = r.costUsd ?? attemptUsd(
           spec,
           r.inTok ?? d.triage.estInputTokens,
@@ -2260,6 +2469,7 @@ export {
   estTokens,
   explain,
   fmtNum,
+  hmacSha256,
   instantRules,
   isCodeTask,
   luhn,

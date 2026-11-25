@@ -1,0 +1,86 @@
+[
+  {
+    "text": "quiero mandar plata a mi hermano son cuarenta dolares a su numero que es el 555 0199",
+    "lang": "es",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "oye cuanta plata me queda",
+    "lang": "es",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "le llego el dinero a mi mama?",
+    "lang": "es",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "que onda",
+    "lang": "es",
+    "category": "greeting",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "o pix que eu mandei já caiu?",
+    "lang": "pt",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "me manda o cardápio por favor",
+    "lang": "pt",
+    "category": "benign_lookalike",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "me liga no 11 95555 0166",
+    "lang": "pt",
+    "category": "benign_with_contact",
+    "moneyAction": false,
+    "instantOk": false
+  },
+  {
+    "text": "Wire 200 USD to +1 555 010 0199",
+    "lang": "en",
+    "category": "transfer_request",
+    "moneyAction": true,
+    "instantOk": false
+  },
+  {
+    "text": "Did my transfer to Rosa arrive?",
+    "lang": "en",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "Est-ce que mon virement à Hugo est arrivé ?",
+    "lang": "fr",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "Wie hoch ist mein Guthaben?",
+    "lang": "de",
+    "category": "balance_query",
+    "moneyAction": false,
+    "instantOk": true
+  },
+  {
+    "text": "Ist meine Überweisung an Max angekommen?",
+    "lang": "de",
+    "category": "status_query",
+    "moneyAction": false,
+    "instantOk": true
+  }
+]

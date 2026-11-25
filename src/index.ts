@@ -1,4 +1,4 @@
-export { buildAudit, randomId, sha256 } from './audit.js';
+export { buildAudit, hmacSha256, randomId, sha256 } from './audit.js';
 export {
   catalogFromOpenRouter,
   catalogFromRows,

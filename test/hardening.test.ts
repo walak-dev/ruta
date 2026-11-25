@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { test } from 'node:test';
 import {
   createRuta,
   type FaqEntry,
+  hmacSha256,
+  maskPII,
   memoryStore,
   sha256,
   sha256Sync,
@@ -27,7 +29,9 @@ const VECTORS: [string, string][] = [
 
 /** Runs fn with globalThis.crypto.subtle hidden (as on runtimes without Web Crypto), then restores it. */
 async function withoutSubtle<T>(fn: () => Promise<T>): Promise<T> {
-  const c = globalThis.crypto;
+  const c = (globalThis as { crypto?: Crypto }).crypto;
+  // Node 18 has no global crypto object at all, so it already runs without SubtleCrypto.
+  if (!c) return fn();
   Object.defineProperty(c, 'subtle', { value: undefined, configurable: true });
   try {
     assert.equal(globalThis.crypto.subtle, undefined);
@@ -245,4 +249,72 @@ test("instant results say whether the answer is final or needs the caller's hand
     assert.equal(d.instant?.kind, kind, message);
     assert.equal(d.instant?.needsHandler, needsHandler, `${message}: needsHandler`);
   }
+});
+
+test('IBANs in any letter case are masked when the checksum is valid, and card codes are masked', () => {
+  for (const s of [
+    'mi iban es es91 2100 0418 4502 0005 1332',
+    'iban: de89370400440532013000',
+    'Es91 2100 0418 4502 0005 1332 hola',
+  ]) {
+    const m = maskPII(s);
+    assert.deepEqual(m.kinds, ['IBAN'], s);
+    assert.ok(!/\d{4}/.test(m.text), `${s} -> ${m.text}`);
+  }
+  assert.ok(maskPII('Es91 2100 0418 4502 0005 1332 hola').text.endsWith(' hola'));
+  assert.ok(!maskPII('ref ES00 2100 0418 4502 0005 1332').kinds.includes('IBAN'), 'bad checksum');
+  const card = maskPII('tarjeta 4111-1111-1111-1111 cvv 123');
+  assert.equal(card.text, 'tarjeta [CARD_1] cvv [CVV_1]');
+});
+
+test('maskPII with a shared map continues the numbering and reuses tokens', () => {
+  const shared: Record<string, string> = {};
+  assert.equal(maskPII('a ana@example.com', shared).text, 'a [EMAIL_1]');
+  assert.equal(
+    maskPII('b bob@example.com y ana@example.com', shared).text,
+    'b [EMAIL_2] y [EMAIL_1]',
+  );
+  assert.deepEqual(Object.keys(shared).sort(), ['[EMAIL_1]', '[EMAIL_2]']);
+});
+
+test('run(): history goes masked to untrusted providers, and handler intents are flagged', async () => {
+  const ruta = createRuta();
+  const seen: string[] = [];
+  const adapter = async ({ messages }: { messages: { content: string }[] }) => {
+    seen.push(...messages.map((m) => m.content));
+    return { text: 'escribo a [EMAIL_1]', inTok: 10, outTok: 5 };
+  };
+  const r = await ruta.run(
+    {
+      message: 'escribe un mensaje corto para mi cliente',
+      channel: 'app',
+      history: [
+        { role: 'user', content: 'mi correo es ana@example.com y mi tarjeta 4111 1111 1111 1111' },
+      ],
+    },
+    { adapters: { openrouter: adapter } },
+  );
+  assert.ok(seen.length > 0);
+  for (const c of seen) assert.ok(!c.includes('ana@example.com') && !c.includes('4111'), c);
+  assert.equal(r.text, 'escribo a ana@example.com', 'the answer is unmasked for the caller');
+  const balance = await ruta.run(
+    { message: 'cuál es mi saldo', channel: 'whatsapp' },
+    { adapters: {} },
+  );
+  assert.equal(balance.needsHandler, true);
+  const hello = await ruta.run({ message: 'hola', channel: 'whatsapp' }, { adapters: {} });
+  assert.equal(hello.needsHandler, undefined);
+});
+
+test('policy.auditSecret keys the user, session and message hashes with HMAC-SHA-256', async () => {
+  const key = 'tenant-secret';
+  assert.equal(hmacSha256(key, 'hola'), createHmac('sha256', key).update('hola').digest('hex'));
+  const long = 'k'.repeat(100);
+  assert.equal(hmacSha256(long, 'ñ €'), createHmac('sha256', long).update('ñ €').digest('hex'));
+  const req = { message: '+5355551234', channel: 'whatsapp' as const, userId: '+5355551234' };
+  const plain = (await createRuta().decide(req)).audit;
+  const keyed = (await createRuta({ policy: { auditSecret: key } }).decide(req)).audit;
+  assert.equal(plain.inputHash, sha256Sync('+5355551234'));
+  assert.equal(keyed.inputHash, hmacSha256(key, '+5355551234'));
+  assert.notEqual(keyed.userHash, plain.userHash);
 });

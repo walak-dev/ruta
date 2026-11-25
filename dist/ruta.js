@@ -148,7 +148,7 @@ export function createRuta(cfg = {}) {
             shadow: P.shadow,
         };
         const full = d;
-        full.audit = await buildAudit(d, req, store);
+        full.audit = await buildAudit(d, req, store, P.auditSecret);
         // thinkMs covers the whole decide() call, audit hashing included (the audit record does not contain it).
         // Only the explanation, which prints this number, is built after it: plain string work.
         full.thinkMs = clock() - start;
@@ -510,7 +510,13 @@ export function createRuta(cfg = {}) {
         const d = await decide(req, opts.override);
         const L = langKey(d.triage.lang);
         if (d.path === 'instant')
-            return { decision: d, text: d.instant?.answer[L] ?? '', costUsd: 0, attempts: [] };
+            return {
+                decision: d,
+                text: d.instant?.answer[L] ?? '',
+                costUsd: 0,
+                attempts: [],
+                ...(d.instant?.needsHandler ? { needsHandler: true } : {}),
+            };
         if (d.path === 'cache')
             return { decision: d, text: d.cached ?? '', costUsd: 0, attempts: [] };
         if (d.path === 'refuse')
@@ -520,6 +526,9 @@ export function createRuta(cfg = {}) {
             ...d.escalation,
         ];
         const hist = (req.history ?? []).slice(-policy.keepTurns);
+        // History is masked with the message's token map, so a provider that gets masked text gets it for every turn.
+        const tokens = { ...(d.masked?.map ?? {}) };
+        const maskedHist = hist.map((t) => ({ ...t, content: maskPII(t.content, tokens).text }));
         const system = [req.system, d.directive?.[L]].filter((x) => !!x).join('\n\n') || undefined;
         const attempts = [];
         let spent = 0;
@@ -530,9 +539,8 @@ export function createRuta(cfg = {}) {
                 attempts.push({ ...step, ok: false, costUsd: 0, error: 'no_adapter' });
                 continue;
             }
-            const mask = !!d.masked &&
-                (policy.maskPii === 'all' ||
-                    (policy.maskPii === 'untrusted' && !spec.local && !spec.zeroDataRetention));
+            const mask = policy.maskPii === 'all' ||
+                (policy.maskPii === 'untrusted' && !spec.local && !spec.zeroDataRetention);
             const content = mask && d.masked ? d.masked.text : req.message;
             const stepDecision = {
                 ...d,
@@ -544,12 +552,12 @@ export function createRuta(cfg = {}) {
                 const r = await adapter({
                     model: step.model,
                     ...(system ? { system } : {}),
-                    messages: [...hist, { role: 'user', content }],
+                    messages: [...(mask ? maskedHist : hist), { role: 'user', content }],
                     maxOutputTokens: d.maxOutputTokens,
                     ...(req.sessionId ? { sessionId: req.sessionId } : {}),
                     ...(opts.user ? { user: opts.user } : {}),
                 });
-                const text = mask && d.masked ? unmask(r.text, d.masked.map) : r.text;
+                const text = mask ? unmask(r.text, tokens) : r.text;
                 const cost = r.costUsd ??
                     attemptUsd(spec, r.inTok ?? d.triage.estInputTokens, r.outTok ?? estTokens(text.length, d.triage.lang), r.cachedTok ?? 0);
                 spent += cost;

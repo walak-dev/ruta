@@ -1,4 +1,4 @@
-import { clauses, moneyView, signalsOf, tokenize } from './money.js';
+import { clauses, isMoneyWord, isNonFinite, moneyView, signalsOf, tokenize, } from './money.js';
 import { clamp, estTokens, norm, reserveTokens, words } from './text.js';
 const TASK_RULES = [
     [
@@ -134,6 +134,30 @@ const RISK_ORDER = [
 ];
 const text = (toks) => toks.map((x) => x.t).join(' ');
 /**
+ * Does this clause only ask how something works or what it costs? Only when the info phrase comes first and
+ * every money word after it is its topic (a noun, an infinitive, "to send", "zu schicken"; see isNonFinite).
+ * A finite money verb, or a money word or amount before the info phrase, is a request:
+ * "manda 50 a juan que es mi hermano", "send 50 dollars to ana how much is the fee".
+ */
+function onlyAsks(c) {
+    const said = text(c);
+    const m = INFO.exec(said);
+    if (!m)
+        return false;
+    const sig = signalsOf(c);
+    if (!sig.action)
+        return true;
+    const at = said.slice(0, m.index).split(' ').length - 1;
+    for (let i = 0; i < c.length; i++) {
+        const x = c[i];
+        if (i < at && sig.amountToRecipient && (x.k === 'num' || x.k === 'pii'))
+            return false;
+        if (x.k === 'word' && isMoneyWord(x.t) && (i < at || !isNonFinite(c, i)))
+            return false;
+    }
+    return true;
+}
+/**
  * Does the text ask to move or spend money, or (outside chat) touch money at all?
  * - Studio, agents and APIs: any money word counts, because that code moves real money.
  * - Chat: a money action counts (see money.ts), and so does a money word, unless it sits in a clause that only
@@ -141,23 +165,35 @@ const text = (toks) => toks.map((x) => x.t).join(' ');
  *   "¿cuánto cuesta? manda 10 a Ana" and "¿puedes mandar 10 a Ana?" are requests.
  * - "Transfer me to a human" is a hand-over, not money.
  */
+/**
+ * Token analysis reads at most the first 48k and the last 16k characters (a WhatsApp message holds at most
+ * 65,536), so pasted megabytes cost milliseconds. The plain money-word check outside chat reads all of it.
+ */
+const HEAD_CHARS = 48_000;
+const TAIL_CHARS = 16_000;
+const bounded = (s) => s.length <= HEAD_CHARS + TAIL_CHARS ? s : `${s.slice(0, HEAD_CHARS)} . ${s.slice(-TAIL_CHARS)}`;
 function isMoney(normalized, channel) {
-    const toks = tokenize(moneyView(normalized));
-    const whole = signalsOf(toks);
+    const chat = CHAT_CHANNELS.includes(channel);
+    const toks = tokenize(moneyView(bounded(normalized)));
+    const whole = signalsOf(toks, chat);
     const word = (t, excused) => MONEY.test(excused.length
         ? t
             .split(' ')
             .filter((x) => !excused.includes(x))
             .join(' ')
         : t);
-    if (!CHAT_CHANNELS.includes(channel))
+    if (!chat)
         return whole.action || MONEY.test(normalized);
     if (DISPUTE.test(normalized) && (whole.action || word(text(toks), whole.excused)))
         return true;
     const asked = [];
-    for (const c of clauses(toks))
-        if (!INFO.test(text(c)))
-            asked.push(...c, { t: '.', k: 'break' });
+    for (const c of clauses(toks)) {
+        if (onlyAsks(c))
+            continue;
+        for (const x of c)
+            asked.push(x);
+        asked.push({ t: '.', k: 'break' });
+    }
     const sig = signalsOf(asked);
     return sig.action || word(text(asked), sig.excused);
 }
