@@ -152,7 +152,15 @@ function topupOnly(n, toks, sig, kinds) {
     }
     return core === 1;
 }
+/** Kinds whose `answer` is only a placeholder or a prompt: the caller's own code must handle the intent. */
+const NEEDS_HANDLER = {
+    greeting: false, thanks: false, faq: false, topup: true, slot: true, status: true, balance: true,
+};
 export function instantRules(message, ctx) {
+    const r = matchInstant(message, ctx);
+    return r ? { ...r, needsHandler: NEEDS_HANDLER[r.kind] } : null;
+}
+function matchInstant(message, ctx) {
     const n = norm(message);
     const w = words(message);
     const masked = maskPII(message);

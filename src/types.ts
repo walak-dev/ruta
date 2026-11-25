@@ -151,8 +151,19 @@ export interface Reason { code: ReasonCode; vars?: Record<string, string | numbe
 
 export interface InstantResult {
   kind: "greeting" | "thanks" | "faq" | "topup" | "slot" | "status" | "balance";
+  /**
+   * Text to send. For greeting, thanks and faq it is the whole answer. For status, balance, topup and slot
+   * it is only a placeholder or a confirmation prompt ("Consulto tu saldo."): see `needsHandler`.
+   */
   answer: Bilingual;
   intent?: Record<string, unknown>;
+  /**
+   * True for status, balance, topup and slot: `answer` is not the real result. Your own deterministic code
+   * must handle `intent` (look up the order or balance, ask for the missing detail, show the confirmation,
+   * run the top-up after the person confirms). False for greeting, thanks and faq, whose `answer` is final.
+   * Ruta always sets it; it is optional only so results built by hand still type-check.
+   */
+  needsHandler?: boolean;
 }
 
 export interface AuditRecord {
@@ -201,6 +212,11 @@ export interface Decision {
   instant?: InstantResult;
   cached?: string;
   cacheKey?: string;
+  /**
+   * The message with phones, cards, emails and IBANs replaced by tokens like [EMAIL_1].
+   * WARNING: `map` holds the ORIGINAL values (token -> raw email, phone, card, IBAN) so answers can be unmasked.
+   * Never log, store or send `masked.map`, or a whole Decision that contains it. Log `toLogRecord(decision)` instead.
+   */
   masked?: { text: string; map: Record<string, string>; kinds: string[] };
   reasons: Reason[];
   explain: { customer: Bilingual; admin: Bilingual };

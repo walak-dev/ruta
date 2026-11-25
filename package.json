@@ -13,6 +13,7 @@
   "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "typecheck:core": "tsc -p tsconfig.core.json",
     "test": "tsc -p tsconfig.test.json && node --test .test-build/test/*.test.js",
     "bundle": "node scripts/bundle.mjs"
   },

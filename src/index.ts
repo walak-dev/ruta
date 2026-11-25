@@ -9,4 +9,6 @@ export { select, priorSuccess, posterior, attemptUsd, tierCapability, statKey } 
 export { explain, fmtNum, taskName, riskName } from "./explain.js";
 export { memoryStore } from "./store.js";
 export { sha256, buildAudit, randomId } from "./audit.js";
+export { sha256Sync } from "./sha256.js";
+export { toLogRecord, type LogRecord } from "./log.js";
 export { norm, detectLang, estTokens, reserveTokens, maskPII, unmask, luhn, CHARS_PER_TOKEN } from "./text.js";

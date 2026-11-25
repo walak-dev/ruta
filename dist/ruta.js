@@ -39,9 +39,10 @@ function parseAsk(raw) {
     }
 }
 function withTimeout(p, ms) {
+    const g = globalThis;
     return new Promise((resolve, reject) => {
-        const t = setTimeout(() => reject(new Error("ask_timeout")), ms);
-        p.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
+        const t = g.setTimeout(() => reject(new Error("ask_timeout")), ms);
+        p.then((v) => { g.clearTimeout(t); resolve(v); }, (e) => { g.clearTimeout(t); reject(e); });
     });
 }
 export function createRuta(cfg = {}) {
@@ -94,17 +95,20 @@ export function createRuta(cfg = {}) {
             ...(parts.masked.kinds.length ? { masked: parts.masked } : {}),
             reasons: parts.reasons,
             stages: parts.stages,
-            thinkMs: clock() - start,
+            thinkMs: 0,
             shadow: P.shadow,
         };
         const full = d;
-        full.explain = explain(full, P);
         full.audit = await buildAudit(d, req, store);
+        // thinkMs covers the whole decide() call, audit hashing included (the audit record does not contain it).
+        // Only the explanation, which prints this number, is built after it: plain string work.
+        full.thinkMs = clock() - start;
+        full.explain = explain(full, P);
         return full;
     }
     async function decide(req, override) {
-        const P = mergePolicy(policy, override);
         const start = clock();
+        const P = mergePolicy(policy, override);
         const now = req.now ?? Date.now();
         const stages = [];
         const reasons = [];

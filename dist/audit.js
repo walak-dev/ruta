@@ -1,25 +1,27 @@
+import { sha256Bytes, toHex, utf8 } from "./sha256.js";
 export function randomId() {
     const c = globalThis.crypto;
     if (c?.randomUUID)
         return c.randomUUID();
     return `r-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }
-function hex(buf) {
-    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-function fnv1a(s) {
-    let h = 0x811c9dc5;
-    for (let i = 0; i < s.length; i++) {
-        h ^= s.charCodeAt(i);
-        h = Math.imul(h, 0x01000193) >>> 0;
-    }
-    return h.toString(16).padStart(8, "0");
-}
+/**
+ * SHA-256 of the string's UTF-8 bytes, as 64 lowercase hex characters. Uses the global SubtleCrypto
+ * when there is one; otherwise (Node 18 without the webcrypto global, some embedded runtimes) the pure
+ * implementation in sha256.ts. Both give the same digest, so audit chains verify across runtimes.
+ */
 export async function sha256(s) {
+    const bytes = utf8(s);
     const subtle = globalThis.crypto?.subtle;
-    if (subtle)
-        return hex(await subtle.digest("SHA-256", new TextEncoder().encode(s)));
-    return `fnv1a-${fnv1a(s)}`;
+    if (subtle) {
+        try {
+            return toHex(new Uint8Array(await subtle.digest("SHA-256", bytes)));
+        }
+        catch {
+            // Same digest from the pure implementation below.
+        }
+    }
+    return toHex(sha256Bytes(bytes));
 }
 /**
  * Tamper-evident decision record: hashes instead of prompts, chained to the previous

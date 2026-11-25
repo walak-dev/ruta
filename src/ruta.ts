@@ -56,10 +56,14 @@ function parseAsk(raw: string): { task: TaskType; difficulty: number } | null {
   }
 }
 
+/** Timers every supported runtime has, typed locally so the core compiles without the DOM or Node libs. */
+interface Timers { setTimeout(fn: () => void, ms: number): unknown; clearTimeout(id: unknown): void }
+
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  const g = globalThis as unknown as Timers;
   return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error("ask_timeout")), ms);
-    p.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
+    const t = g.setTimeout(() => reject(new Error("ask_timeout")), ms);
+    p.then((v) => { g.clearTimeout(t); resolve(v); }, (e) => { g.clearTimeout(t); reject(e); });
   });
 }
 
@@ -120,18 +124,21 @@ export function createRuta(cfg: RutaConfig = {}) {
       ...(parts.masked.kinds.length ? { masked: parts.masked } : {}),
       reasons: parts.reasons,
       stages: parts.stages,
-      thinkMs: clock() - start,
+      thinkMs: 0,
       shadow: P.shadow,
     };
     const full = d as Decision;
-    full.explain = explain(full, P);
     full.audit = await buildAudit(d, req, store);
+    // thinkMs covers the whole decide() call, audit hashing included (the audit record does not contain it).
+    // Only the explanation, which prints this number, is built after it: plain string work.
+    full.thinkMs = clock() - start;
+    full.explain = explain(full, P);
     return full;
   }
 
   async function decide(req: RouteRequest, override?: Partial<Policy>): Promise<Decision> {
-    const P = mergePolicy(policy, override);
     const start = clock();
+    const P = mergePolicy(policy, override);
     const now = req.now ?? Date.now();
     const stages: StageLog[] = [];
     const reasons: Reason[] = [];

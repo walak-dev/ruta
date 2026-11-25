@@ -156,7 +156,17 @@ function topupOnly(n: string, toks: Tok[], sig: MoneySignals, kinds: string[]): 
   return core === 1;
 }
 
+/** Kinds whose `answer` is only a placeholder or a prompt: the caller's own code must handle the intent. */
+const NEEDS_HANDLER: Record<InstantResult["kind"], boolean> = {
+  greeting: false, thanks: false, faq: false, topup: true, slot: true, status: true, balance: true,
+};
+
 export function instantRules(message: string, ctx: RuleContext): InstantResult | null {
+  const r = matchInstant(message, ctx);
+  return r ? { ...r, needsHandler: NEEDS_HANDLER[r.kind] } : null;
+}
+
+function matchInstant(message: string, ctx: RuleContext): InstantResult | null {
   const n = norm(message);
   const w = words(message);
   const masked = maskPII(message);
