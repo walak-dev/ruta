@@ -29,12 +29,12 @@ const VECTORS: [string, string][] = [
 
 /** Runs fn with globalThis.crypto.subtle hidden (as on runtimes without Web Crypto), then restores it. */
 async function withoutSubtle<T>(fn: () => Promise<T>): Promise<T> {
-  const c = (globalThis as { crypto?: Crypto }).crypto;
+  const c = (globalThis as { crypto?: { subtle?: unknown } }).crypto;
   // Node 18 has no global crypto object at all, so it already runs without SubtleCrypto.
   if (!c) return fn();
   Object.defineProperty(c, 'subtle', { value: undefined, configurable: true });
   try {
-    assert.equal(globalThis.crypto.subtle, undefined);
+    assert.equal(c.subtle, undefined);
     return await fn();
   } finally {
     delete (c as { subtle?: unknown }).subtle;
