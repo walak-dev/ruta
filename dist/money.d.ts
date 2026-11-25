@@ -7,7 +7,7 @@
  * confirmation; a missed money action is the expensive error. It is a routing hint, never a
  * security control: callers must still gate money in their own code.
  */
-export type TokKind = "num" | "word" | "cur" | "pii" | "break";
+export type TokKind = 'num' | 'word' | 'cur' | 'pii' | 'break';
 export interface Tok {
     t: string;
     k: TokKind;

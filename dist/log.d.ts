@@ -1,4 +1,4 @@
-import type { Decision, Lang, Path, ReasonCode, RiskClass, TaskType } from "./types.js";
+import type { Decision, Lang, Path, ReasonCode, RiskClass, TaskType } from './types.js';
 /** What is safe to log about a decision: routing facts only, no text the person wrote. */
 export interface LogRecord {
     id: string;

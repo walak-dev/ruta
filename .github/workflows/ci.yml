@@ -4,6 +4,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node: [18, 20, 22]
     steps:
@@ -11,7 +12,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - run: npm install --no-audit --no-fund
-      - run: npm run build
-      - run: npm test
-      - run: npm run bundle
+      - name: Install (root)
+        run: npm ci --no-audit --no-fund
+      - name: Install (mcp)
+        run: npm --prefix mcp ci --no-audit --no-fund
+      - name: Lint
+        run: npm run lint
+      - name: Type-check the core without DOM types
+        run: npm run typecheck:core
+      - name: Rebuild every committed artifact
+        run: npm run build:all
+      - name: Test
+        run: npm test
+      - name: Committed artifacts match the sources
+        run: |
+          git diff --exit-code
+          test -z "$(git status --porcelain)" || { git status --porcelain; exit 1; }

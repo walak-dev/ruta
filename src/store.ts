@@ -1,4 +1,4 @@
-import type { SessionState, Store } from "./types.js";
+import type { SessionState, Store } from './types.js';
 
 /**
  * In-memory store: answer cache (TTL + LRU), outcome stats, measured token ratios,
@@ -15,7 +15,10 @@ export function memoryStore(opts: { maxCache?: number } = {}): Store {
     getCache(k, now) {
       const e = cache.get(k);
       if (!e) return undefined;
-      if (e.exp < now) { cache.delete(k); return undefined; }
+      if (e.exp < now) {
+        cache.delete(k);
+        return undefined;
+      }
       cache.delete(k);
       cache.set(k, e);
       return e.a;
@@ -28,10 +31,13 @@ export function memoryStore(opts: { maxCache?: number } = {}): Store {
         cache.delete(first);
       }
     },
-    getStats(k) { return stats.get(k) ?? { s: 0, f: 0 }; },
+    getStats(k) {
+      return stats.get(k) ?? { s: 0, f: 0 };
+    },
     addStat(k, ok) {
       const st = stats.get(k) ?? { s: 0, f: 0 };
-      if (ok) st.s++; else st.f++;
+      if (ok) st.s++;
+      else st.f++;
       stats.set(k, st);
     },
     getRatio(k) {
@@ -44,9 +50,17 @@ export function memoryStore(opts: { maxCache?: number } = {}): Store {
       r.tokens += tokens;
       ratios.set(k, r);
     },
-    getSession(id) { return sessions.get(id); },
-    setSession(id, s) { sessions.set(id, s); },
-    lastHash() { return last; },
-    setLastHash(h) { last = h; },
+    getSession(id) {
+      return sessions.get(id);
+    },
+    setSession(id, s) {
+      sessions.set(id, s);
+    },
+    lastHash() {
+      return last;
+    },
+    setLastHash(h) {
+      last = h;
+    },
   };
 }

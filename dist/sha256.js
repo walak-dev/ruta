@@ -13,7 +13,9 @@ const K = new Uint32Array([
     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ]);
-const H0 = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+const H0 = [
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+];
 const ror = (x, n) => (x >>> n) | (x << (32 - n));
 /** UTF-8 bytes of a string, like TextEncoder: a lone surrogate becomes U+FFFD. */
 export function utf8(s) {
@@ -66,7 +68,12 @@ export function sha256Bytes(data) {
         let a = h[0], b = h[1], c = h[2], d = h[3];
         let e = h[4], f = h[5], g = h[6], hh = h[7];
         for (let i = 0; i < 64; i++) {
-            const t1 = (hh + (ror(e, 6) ^ ror(e, 11) ^ ror(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0;
+            const t1 = (hh +
+                (ror(e, 6) ^ ror(e, 11) ^ ror(e, 25)) +
+                ((e & f) ^ (~e & g)) +
+                K[i] +
+                w[i]) |
+                0;
             const t2 = ((ror(a, 2) ^ ror(a, 13) ^ ror(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
             hh = g;
             g = f;
@@ -94,9 +101,9 @@ export function sha256Bytes(data) {
 }
 /** Lowercase hex of bytes. */
 export function toHex(bytes) {
-    let s = "";
+    let s = '';
     for (let i = 0; i < bytes.length; i++)
-        s += bytes[i].toString(16).padStart(2, "0");
+        s += bytes[i].toString(16).padStart(2, '0');
     return s;
 }
 /** Synchronous SHA-256 of a string's UTF-8 bytes, as 64 hex characters. */

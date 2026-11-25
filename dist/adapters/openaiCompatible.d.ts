@@ -1,4 +1,4 @@
-import type { Adapter } from "../types.js";
+import type { Adapter } from '../types.js';
 export declare class RutaCallError extends Error {
     status?: number | undefined;
     constructor(code: string, status?: number | undefined);

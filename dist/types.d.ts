@@ -2,14 +2,14 @@
  * Ruta: think-first model routing. Shared types, zero runtime dependencies.
  * Runs in Node 18+, Deno, Bun, Cloudflare Workers, Supabase Edge and the browser.
  */
-export type Lang = "es" | "en" | "pt" | "fr" | "de" | "ht" | "other";
-export type Channel = "whatsapp" | "sms" | "web" | "app" | "studio" | "agent" | "api" | "cli";
-export type RiskClass = "money" | "auth_security" | "identity_kyc" | "legal_compliance" | "pii" | "none";
-export type TaskType = "greeting" | "thanks" | "faq" | "intent_topup" | "status_check" | "balance_check" | "chat" | "extract" | "classify" | "summarize" | "translate" | "write_short" | "write_long" | "code_small" | "code_feature" | "code_debug" | "architecture" | "plan" | "analysis" | "vision" | "agent_orchestrate";
-export type Path = "instant" | "cache" | "model" | "refuse";
-export type Role = "user" | "orchestrator" | "worker" | "reviewer";
-export type Strength = "code" | "reasoning" | "spanish" | "json" | "vision";
-export type StageName = "instant" | "memory" | "read" | "ask" | "select" | "budget";
+export type Lang = 'es' | 'en' | 'pt' | 'fr' | 'de' | 'ht' | 'other';
+export type Channel = 'whatsapp' | 'sms' | 'web' | 'app' | 'studio' | 'agent' | 'api' | 'cli';
+export type RiskClass = 'money' | 'auth_security' | 'identity_kyc' | 'legal_compliance' | 'pii' | 'none';
+export type TaskType = 'greeting' | 'thanks' | 'faq' | 'intent_topup' | 'status_check' | 'balance_check' | 'chat' | 'extract' | 'classify' | 'summarize' | 'translate' | 'write_short' | 'write_long' | 'code_small' | 'code_feature' | 'code_debug' | 'architecture' | 'plan' | 'analysis' | 'vision' | 'agent_orchestrate';
+export type Path = 'instant' | 'cache' | 'model' | 'refuse';
+export type Role = 'user' | 'orchestrator' | 'worker' | 'reviewer';
+export type Strength = 'code' | 'reasoning' | 'spanish' | 'json' | 'vision';
+export type StageName = 'instant' | 'memory' | 'read' | 'ask' | 'select' | 'budget';
 export interface Bilingual {
     es: string;
     en: string;
@@ -35,7 +35,7 @@ export interface ModelSpec {
     zeroDataRetention?: boolean;
 }
 export interface Turn {
-    role: "user" | "assistant" | "system";
+    role: 'user' | 'assistant' | 'system';
     content: string;
 }
 export interface FaqEntry {
@@ -60,7 +60,7 @@ export interface RouteRequest {
     images?: number;
     channel?: Channel;
     taskHint?: TaskType;
-    stage?: "plan" | "build" | "review";
+    stage?: 'plan' | 'build' | 'review';
     role?: Role;
     lang?: Lang;
     tenantId?: string;
@@ -111,8 +111,8 @@ export interface Policy {
     shadow: boolean;
     learning: boolean;
     /** "tier": customers only ever see tier names, never vendors or models. */
-    customerWording: "tier" | "model";
-    maskPii: "untrusted" | "all" | "none";
+    customerWording: 'tier' | 'model';
+    maskPii: 'untrusted' | 'all' | 'none';
     keepTurns: number;
     /** USD per crédito, for display. */
     creditUsd: number;
@@ -150,13 +150,13 @@ export interface Candidate {
     cachedTokens: number;
     note?: string;
 }
-export type ReasonCode = "instant_greeting" | "instant_thanks" | "instant_faq" | "instant_topup" | "instant_slot" | "instant_status" | "instant_balance" | "cache_hit" | "task_simple" | "task_medium" | "task_complex" | "risk_pin" | "confirm_gate" | "sticky" | "lang_fit" | "local_first" | "offline" | "unsure_roundup" | "asked" | "budget_short" | "budget_downgrade" | "budget_refuse" | "best_available" | "loop_breaker" | "plan_stage" | "build_stage" | "context_trim" | "short_channel" | "role_bound" | "no_model";
+export type ReasonCode = 'instant_greeting' | 'instant_thanks' | 'instant_faq' | 'instant_topup' | 'instant_slot' | 'instant_status' | 'instant_balance' | 'cache_hit' | 'task_simple' | 'task_medium' | 'task_complex' | 'risk_pin' | 'confirm_gate' | 'sticky' | 'lang_fit' | 'local_first' | 'offline' | 'unsure_roundup' | 'asked' | 'budget_short' | 'budget_downgrade' | 'budget_refuse' | 'best_available' | 'loop_breaker' | 'plan_stage' | 'build_stage' | 'context_trim' | 'short_channel' | 'role_bound' | 'no_model';
 export interface Reason {
     code: ReasonCode;
     vars?: Record<string, string | number>;
 }
 export interface InstantResult {
-    kind: "greeting" | "thanks" | "faq" | "topup" | "slot" | "status" | "balance";
+    kind: 'greeting' | 'thanks' | 'faq' | 'topup' | 'slot' | 'status' | 'balance';
     /**
      * Text to send. For greeting, thanks and faq it is the whole answer. For status, balance, topup and slot
      * it is only a placeholder or a confirmation prompt ("Consulto tu saldo."): see `needsHandler`.

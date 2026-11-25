@@ -1,4 +1,4 @@
-import { sha256Bytes, toHex, utf8 } from "./sha256.js";
+import { sha256Bytes, toHex, utf8 } from './sha256.js';
 export function randomId() {
     const c = globalThis.crypto;
     if (c?.randomUUID)
@@ -15,7 +15,7 @@ export async function sha256(s) {
     const subtle = globalThis.crypto?.subtle;
     if (subtle) {
         try {
-            return toHex(new Uint8Array(await subtle.digest("SHA-256", bytes)));
+            return toHex(new Uint8Array(await subtle.digest('SHA-256', bytes)));
         }
         catch {
             // Same digest from the pure implementation below.
@@ -35,7 +35,7 @@ export async function buildAudit(d, req, store) {
         ...(req.tenantId ? { tenantId: req.tenantId } : {}),
         ...(req.userId ? { userHash: (await sha256(`u:${req.userId}`)).slice(0, 16) } : {}),
         ...(req.sessionId ? { sessionHash: (await sha256(`s:${req.sessionId}`)).slice(0, 16) } : {}),
-        channel: req.channel ?? "app",
+        channel: req.channel ?? 'app',
         inputHash: await sha256(req.message),
         path: d.path,
         task: d.triage.task,

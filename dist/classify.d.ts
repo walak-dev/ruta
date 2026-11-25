@@ -1,5 +1,5 @@
-import type { Channel, Lang, RiskClass, RouteRequest, TaskType, Triage } from "./types.js";
-import { type Masked } from "./text.js";
+import { type Masked } from './text.js';
+import type { Channel, Lang, RiskClass, RouteRequest, TaskType, Triage } from './types.js';
 /**
  * Deterministic risk. The thinking step can never be talked out of it.
  * A routing hint, never a security control: callers must still gate money in their own code.

@@ -3,7 +3,7 @@
  * the shared budget, and has its own loop breaker, so one stuck agent can't drain the rest.
  */
 export function createSwarm(ruta, o) {
-    const id = o.id ?? "swarm";
+    const id = o.id ?? 'swarm';
     let spent = 0;
     let baseline = 0;
     const agents = new Map();
@@ -19,19 +19,28 @@ export function createSwarm(ruta, o) {
         async decide(agentId, role, req) {
             book(agentId, role);
             const remaining = Math.max(0, o.budgetUsd - spent);
-            return ruta.decide({ ...req, role, channel: req.channel ?? "agent", sessionId: `${id}:${agentId}`, budget: { ...req.budget, remainingUsd: Math.min(remaining, req.budget?.remainingUsd ?? Infinity) } }, { ...o.policy, roleBounds: { ...ruta.policy.roleBounds, ...(o.roles ?? {}) } });
+            return ruta.decide({
+                ...req,
+                role,
+                channel: req.channel ?? 'agent',
+                sessionId: `${id}:${agentId}`,
+                budget: {
+                    ...req.budget,
+                    remainingUsd: Math.min(remaining, req.budget?.remainingUsd ?? Infinity),
+                },
+            }, { ...o.policy, roleBounds: { ...ruta.policy.roleBounds, ...(o.roles ?? {}) } });
         },
         record(agentId, d, outcome) {
-            const a = book(agentId, agents.get(agentId)?.role ?? "worker");
-            const cost = outcome.costUsd ?? (d.path === "model" ? d.estimate.usd : 0);
+            const a = book(agentId, agents.get(agentId)?.role ?? 'worker');
+            const cost = outcome.costUsd ?? (d.path === 'model' ? d.estimate.usd : 0);
             spent += cost;
             baseline += d.estimate.baselineUsd;
             a.calls++;
             a.spentUsd += cost;
             a.baselineUsd += d.estimate.baselineUsd;
-            if (d.path === "model")
+            if (d.path === 'model')
                 a.failures = outcome.ok ? 0 : a.failures + 1;
-            a.stopped = d.path === "refuse";
+            a.stopped = d.path === 'refuse';
             ruta.record(d, { ...outcome, sessionId: `${id}:${agentId}` });
         },
         report() {

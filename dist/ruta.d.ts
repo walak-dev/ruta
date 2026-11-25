@@ -1,4 +1,4 @@
-import type { Adapter, AskFn, Decision, FaqEntry, ModelSpec, Policy, RouteRequest, Store } from "./types.js";
+import type { Adapter, AskFn, Decision, FaqEntry, ModelSpec, Policy, RouteRequest, Store } from './types.js';
 export interface RutaConfig {
     catalog?: ModelSpec[];
     policy?: Partial<Policy>;

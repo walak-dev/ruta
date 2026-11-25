@@ -15,7 +15,9 @@ const K = new Uint32Array([
   0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ]);
 
-const H0 = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+const H0 = [
+  0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+];
 
 const ror = (x: number, n: number): number => (x >>> n) | (x << (32 - n));
 
@@ -26,12 +28,16 @@ export function utf8(s: string): Uint8Array {
     let c = s.charCodeAt(i);
     if (c >= 0xd800 && c <= 0xdbff) {
       const d = i + 1 < s.length ? s.charCodeAt(i + 1) : 0;
-      if (d >= 0xdc00 && d <= 0xdfff) { c = 0x10000 + ((c - 0xd800) << 10) + (d - 0xdc00); i++; } else c = 0xfffd;
+      if (d >= 0xdc00 && d <= 0xdfff) {
+        c = 0x10000 + ((c - 0xd800) << 10) + (d - 0xdc00);
+        i++;
+      } else c = 0xfffd;
     } else if (c >= 0xdc00 && c <= 0xdfff) c = 0xfffd;
     if (c < 0x80) out.push(c);
     else if (c < 0x800) out.push(0xc0 | (c >> 6), 0x80 | (c & 63));
     else if (c < 0x10000) out.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
-    else out.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 63), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
+    else
+      out.push(0xf0 | (c >> 18), 0x80 | ((c >> 12) & 63), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
   }
   return new Uint8Array(out);
 }
@@ -51,20 +57,46 @@ export function sha256Bytes(data: Uint8Array): Uint8Array {
   for (let off = 0; off < padded; off += 64) {
     for (let i = 0; i < 16; i++) w[i] = view.getUint32(off + i * 4);
     for (let i = 16; i < 64; i++) {
-      const a = w[i - 15] as number, b = w[i - 2] as number;
+      const a = w[i - 15] as number,
+        b = w[i - 2] as number;
       const s0 = ror(a, 7) ^ ror(a, 18) ^ (a >>> 3);
       const s1 = ror(b, 17) ^ ror(b, 19) ^ (b >>> 10);
       w[i] = (w[i - 16] as number) + s0 + (w[i - 7] as number) + s1;
     }
-    let a = h[0] as number, b = h[1] as number, c = h[2] as number, d = h[3] as number;
-    let e = h[4] as number, f = h[5] as number, g = h[6] as number, hh = h[7] as number;
+    let a = h[0] as number,
+      b = h[1] as number,
+      c = h[2] as number,
+      d = h[3] as number;
+    let e = h[4] as number,
+      f = h[5] as number,
+      g = h[6] as number,
+      hh = h[7] as number;
     for (let i = 0; i < 64; i++) {
-      const t1 = (hh + (ror(e, 6) ^ ror(e, 11) ^ ror(e, 25)) + ((e & f) ^ (~e & g)) + (K[i] as number) + (w[i] as number)) | 0;
+      const t1 =
+        (hh +
+          (ror(e, 6) ^ ror(e, 11) ^ ror(e, 25)) +
+          ((e & f) ^ (~e & g)) +
+          (K[i] as number) +
+          (w[i] as number)) |
+        0;
       const t2 = ((ror(a, 2) ^ ror(a, 13) ^ ror(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
-      hh = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+      hh = g;
+      g = f;
+      f = e;
+      e = (d + t1) | 0;
+      d = c;
+      c = b;
+      b = a;
+      a = (t1 + t2) | 0;
     }
-    h[0] = (h[0] as number) + a; h[1] = (h[1] as number) + b; h[2] = (h[2] as number) + c; h[3] = (h[3] as number) + d;
-    h[4] = (h[4] as number) + e; h[5] = (h[5] as number) + f; h[6] = (h[6] as number) + g; h[7] = (h[7] as number) + hh;
+    h[0] = (h[0] as number) + a;
+    h[1] = (h[1] as number) + b;
+    h[2] = (h[2] as number) + c;
+    h[3] = (h[3] as number) + d;
+    h[4] = (h[4] as number) + e;
+    h[5] = (h[5] as number) + f;
+    h[6] = (h[6] as number) + g;
+    h[7] = (h[7] as number) + hh;
   }
   const out = new Uint8Array(32);
   const ov = new DataView(out.buffer);
@@ -74,8 +106,8 @@ export function sha256Bytes(data: Uint8Array): Uint8Array {
 
 /** Lowercase hex of bytes. */
 export function toHex(bytes: Uint8Array): string {
-  let s = "";
-  for (let i = 0; i < bytes.length; i++) s += (bytes[i] as number).toString(16).padStart(2, "0");
+  let s = '';
+  for (let i = 0; i < bytes.length; i++) s += (bytes[i] as number).toString(16).padStart(2, '0');
   return s;
 }
 

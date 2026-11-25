@@ -1,11 +1,11 @@
-import { maskPII, norm, tailDigits, words } from "./text.js";
-import { clauses, isTopupDetail, signalsOf, tokenize } from "./money.js";
+import { clauses, isTopupDetail, signalsOf, tokenize, } from './money.js';
+import { maskPII, norm, tailDigits, words } from './text.js';
 /**
  * Stage 1, "instant": answers that need no model at all. The cheapest model is no model.
  * Money is never moved here: top-ups become a structured intent that deterministic code
  * turns into a confirmation (and later a checkout link).
  */
-const CHAT_CHANNELS = ["whatsapp", "sms", "app", "web"];
+const CHAT_CHANNELS = ['whatsapp', 'sms', 'app', 'web'];
 const set = (s) => new Set(s.split(/\s+/).filter(Boolean));
 const GREET = /^(hola+|holi|buenas|buen dia|buenos dias|buenas tardes|buenas noches|hello+|hi|hey+|good (?:morning|afternoon|evening)|ola+|oi+|opa|bom dia|boa tarde|boa noite|bonjour|bonsoir|bjr|bsr|slt|salut|coucou|bonjou|alo|que tal|hallo+|guten (?:morgen|tag|abend)|moin|servus)( [a-z]+){0,2}$/;
 const THANKS = /^(?:(?:ok|okay|oki|vale|listo|perfecto|super|genial|great|cool|parfait|prima|blz|beleza) )?(muchas gra[cs]ias|mil gra[cs]ias|gra[cs]ias|thanks|thank you|thx|ty|(?:muito )?o?brigad(?:o|a|ao|inho)|valeu|merci|mrc|mesi|danke(?: ?schon| sehr)?|vielen dank|besten dank)( [a-z]+){0,3}$/;
@@ -29,7 +29,7 @@ const COMMON = set(`por favor porfa porfavor xfa pls plz please plis pfv pf svp 
   dime dices dice decir decirme ver saber consultar consulta revisar revisa muestra muestrame mostrar check show tell see know view
   voir savoir connaitre consulter montre dis dire zeig zeige zeigen anzeigen sagen sag wissen sehen ve mostra
   cual cuanto cuanta que es esta what whats is s how much many do quel quelle est c d l quoi combien wie viel wieviel ist was qual quanto qto e si if se ob`);
-const BALANCE_NOUN = set("saldo balance solde kontostand guthaben");
+const BALANCE_NOUN = set('saldo balance solde kontostand guthaben');
 const BALANCE_WORDS = set(`tengo queda quedan have left remaining tenho resta sobrou ai reste hab habe ubrig noch disponible available disponivel verfugbar
   billetera cuenta monedero wallet account carteira conta portefeuille compte konto dinero plata money dinheiro argent geld credito credit`);
 const HOW_MUCH = /\b(cuant[oa]|how much|combien|wie ?viel|quanto|qto)\b/;
@@ -43,9 +43,12 @@ const STATUS_WORDS = set(`recarga envio remesa transferencia pedido orden order 
 const STATUS_OBJ = /\b(recarga|envio|remesa|transferencia|pedido|orden|order|top ?up|giro|paquete|transfer|money|dinero|plata|pix|deposito|pago|dinheiro|transfert|virement|recharge|commande|argent|colis|ue?berweisung|aufladung|bestellung|geld|paket|zahlung|encomenda|compra)\b/;
 const STATUS_Q = /\b(llego|llegado|no llega|estado|status|statut|donde esta|where is|arrived?|go(?:ne)? thr(?:ough|u)|went thr(?:ough|u)|como va|caiu|chegou|cade|ja foi|arrivee?|passee?|ou en est|angekommen|wo (?:ist|bleibt)|ausgefu(?:e)?hrt|eingegangen|tracking|rastreo)\b/;
 function only(toks, ...lists) {
-    return toks.every((x) => x.k === "break" || (x.k === "word" && lists.some((l) => l.has(x.t))));
+    return toks.every((x) => x.k === 'break' || (x.k === 'word' && lists.some((l) => l.has(x.t))));
 }
-const joined = (toks) => toks.filter((x) => x.k === "word").map((x) => x.t).join(" ");
+const joined = (toks) => toks
+    .filter((x) => x.k === 'word')
+    .map((x) => x.t)
+    .join(' ');
 function isBalance(toks) {
     const t = joined(toks);
     const core = toks.some((x) => BALANCE_NOUN.has(x.t)) || (HOW_MUCH.test(t) && HAVE.test(t));
@@ -56,14 +59,39 @@ function isStatus(toks) {
     return STATUS_OBJ.test(t) && STATUS_Q.test(t) && only(toks, COMMON, STATUS_WORDS);
 }
 const CURRENCY = [
-    [/\b(usd|dolares?|dollars?)\b|\$/, "USD"],
-    [/\bcup\b|pesos cubanos/, "CUP"],
-    [/\bmxn\b|pesos mexicanos/, "MXN"],
-    [/\b(pen|soles?)\b|s\//, "PEN"],
-    [/\b(bob|bolivianos?)\b/, "BOB"],
-    [/\b(eur|euros?)\b|€/, "EUR"],
+    [/\b(usd|dolares?|dollars?)\b|\$/, 'USD'],
+    [/\bcup\b|pesos cubanos/, 'CUP'],
+    [/\bmxn\b|pesos mexicanos/, 'MXN'],
+    [/\b(pen|soles?)\b|s\//, 'PEN'],
+    [/\b(bob|bolivianos?)\b/, 'BOB'],
+    [/\b(eur|euros?)\b|€/, 'EUR'],
 ];
-const FAQ_STOP = new Set(["que", "the", "and", "los", "las", "del", "una", "uno", "por", "para", "con", "como", "you", "your", "for", "with", "mis", "tus", "hay", "esta", "este", "puedo", "can", "how"]);
+const FAQ_STOP = new Set([
+    'que',
+    'the',
+    'and',
+    'los',
+    'las',
+    'del',
+    'una',
+    'uno',
+    'por',
+    'para',
+    'con',
+    'como',
+    'you',
+    'your',
+    'for',
+    'with',
+    'mis',
+    'tus',
+    'hay',
+    'esta',
+    'este',
+    'puedo',
+    'can',
+    'how',
+]);
 function contentWords(n) {
     return new Set((n.match(/[a-z0-9]+/g) ?? []).filter((x) => x.length > 2 && !FAQ_STOP.has(x)));
 }
@@ -99,7 +127,7 @@ function money(n) {
 function topup(message, amount) {
     const m = maskPII(message);
     const n = norm(m.text);
-    const phoneToken = Object.keys(m.map).find((k) => k.startsWith("[PHONE_"));
+    const phoneToken = Object.keys(m.map).find((k) => k.startsWith('[PHONE_'));
     let currency = null;
     for (const [re, c] of CURRENCY)
         if (re.test(n)) {
@@ -108,23 +136,23 @@ function topup(message, amount) {
         }
     if (!phoneToken) {
         return {
-            kind: "slot",
-            intent: { kind: "topup", missing: "phone", amount, currency },
-            answer: { es: "¿A qué número va la recarga?", en: "Which number is the top-up for?" },
+            kind: 'slot',
+            intent: { kind: 'topup', missing: 'phone', amount, currency },
+            answer: { es: '¿A qué número va la recarga?', en: 'Which number is the top-up for?' },
         };
     }
-    const phoneTail = tailDigits(m.map[phoneToken] ?? "");
+    const phoneTail = tailDigits(m.map[phoneToken] ?? '');
     if (!amount) {
         return {
-            kind: "slot",
-            intent: { kind: "topup", missing: "amount", phoneToken, phoneTail, currency },
-            answer: { es: "¿De cuánto es la recarga?", en: "How much is the top-up?" },
+            kind: 'slot',
+            intent: { kind: 'topup', missing: 'amount', phoneToken, phoneTail, currency },
+            answer: { es: '¿De cuánto es la recarga?', en: 'How much is the top-up?' },
         };
     }
-    const cur = currency ? ` ${currency}` : "";
+    const cur = currency ? ` ${currency}` : '';
     return {
-        kind: "topup",
-        intent: { kind: "topup", amount, currency, phoneToken, phoneTail, needsConfirm: true },
+        kind: 'topup',
+        intent: { kind: 'topup', amount, currency, phoneToken, phoneTail, needsConfirm: true },
         answer: {
             es: `Recarga de ${money(amount)}${cur} al número que termina en ${phoneTail}. ¿Confirmas? Responde SÍ.`,
             en: `Top-up of ${money(amount)}${cur} to the number ending in ${phoneTail}. Confirm? Reply YES.`,
@@ -141,20 +169,26 @@ const HELLO = /^(?:hola+|holi|buenas|buenos|buen|dia|dias|tardes|noches|hello+|h
 function topupOnly(n, toks, sig, kinds) {
     if (!sig.topupWord || sig.other || sig.amounts > 1 || TOPUP_EXCLUDE.test(n))
         return false;
-    if (kinds.some((k) => k !== "PHONE") || toks.filter((x) => x.k === "pii").length > 1)
+    if (kinds.some((k) => k !== 'PHONE') || toks.filter((x) => x.k === 'pii').length > 1)
         return false;
     let core = 0;
     for (const c of clauses(toks)) {
         if (signalsOf(c).topupWord)
             core++;
-        else if (!isTopupDetail(c) && !c.every((x) => x.k === "word" && HELLO.test(x.t)))
+        else if (!isTopupDetail(c) && !c.every((x) => x.k === 'word' && HELLO.test(x.t)))
             return false;
     }
     return core === 1;
 }
 /** Kinds whose `answer` is only a placeholder or a prompt: the caller's own code must handle the intent. */
 const NEEDS_HANDLER = {
-    greeting: false, thanks: false, faq: false, topup: true, slot: true, status: true, balance: true,
+    greeting: false,
+    thanks: false,
+    faq: false,
+    topup: true,
+    slot: true,
+    status: true,
+    balance: true,
 };
 export function instantRules(message, ctx) {
     const r = matchInstant(message, ctx);
@@ -164,38 +198,47 @@ function matchInstant(message, ctx) {
     const n = norm(message);
     const w = words(message);
     const masked = maskPII(message);
-    const toks = tokenize(norm(masked.text).replace(/ß/g, "ss"));
+    const toks = tokenize(norm(masked.text).replace(/ß/g, 'ss'));
     const sig = signalsOf(toks);
     // Safe by construction: a money action, an amount tied to a recipient, an email, an IBAN or a card
     // never takes the no-model path. The one exception is a top-up that is the only request.
-    const blocked = sig.action || masked.kinds.some((k) => k !== "PHONE");
+    const blocked = sig.action || masked.kinds.some((k) => k !== 'PHONE');
     const chat = CHAT_CHANNELS.includes(ctx.channel);
     const plain = !blocked && masked.kinds.length === 0;
     const status = chat && plain && w.length <= 20 && isStatus(toks);
     const balance = chat && plain && w.length <= 12 && isBalance(toks);
-    const letters = n.replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+    const letters = n
+        .replace(/[^a-z ]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
     // A greeting or thanks with a number, a contact or a whole-message intent in it is not just a greeting.
     const intent = status || balance || masked.kinds.length > 0 || /\d/.test(n);
     if (!blocked && !intent && w.length <= 5 && GREET.test(letters)) {
-        return { kind: "greeting", answer: { es: "¡Hola! ¿En qué te ayudo?", en: "Hi! How can I help?" } };
+        return {
+            kind: 'greeting',
+            answer: { es: '¡Hola! ¿En qué te ayudo?', en: 'Hi! How can I help?' },
+        };
     }
     if (!blocked && !intent && w.length <= 6 && THANKS.test(letters)) {
-        return { kind: "thanks", answer: { es: "¡Con gusto!", en: "You're welcome!" } };
+        return { kind: 'thanks', answer: { es: '¡Con gusto!', en: "You're welcome!" } };
     }
     if (!chat)
         return null;
     if (!blocked && w.length <= 30 && ctx.faq.length > 0) {
         const f = matchFaq(message, ctx.faq);
         if (f)
-            return { kind: "faq", intent: { faqId: f.id }, answer: { es: f.a.es, en: f.a.en ?? f.a.es } };
+            return { kind: 'faq', intent: { faqId: f.id }, answer: { es: f.a.es, en: f.a.en ?? f.a.es } };
     }
     if (TASK_VERB.test(n))
         return null;
     if (status) {
         return {
-            kind: "status",
-            intent: { kind: "status_lookup" },
-            answer: { es: "Busco tu envío en el sistema y te digo cómo va.", en: "Checking your order in the system now." },
+            kind: 'status',
+            intent: { kind: 'status_lookup' },
+            answer: {
+                es: 'Busco tu envío en el sistema y te digo cómo va.',
+                en: 'Checking your order in the system now.',
+            },
         };
     }
     // "Gracias por la recarga" thanks for a top-up; it does not ask for one.
@@ -203,7 +246,11 @@ function matchInstant(message, ctx) {
     if (w.length <= 25 && !thanksOnly && topupOnly(n, toks, sig, masked.kinds))
         return topup(message, sig.amountValue);
     if (balance) {
-        return { kind: "balance", intent: { kind: "balance_lookup" }, answer: { es: "Consulto tu saldo.", en: "Checking your balance." } };
+        return {
+            kind: 'balance',
+            intent: { kind: 'balance_lookup' },
+            answer: { es: 'Consulto tu saldo.', en: 'Checking your balance.' },
+        };
     }
     return null;
 }

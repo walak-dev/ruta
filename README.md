@@ -2,7 +2,7 @@
 
 **Piensa antes de gastar.** Ruta decide, antes de gastar un solo token, el camino más barato que va a funcionar: sin IA, una respuesta guardada, un modelo rápido o uno fuerte. Pone el riesgo por encima de la complejidad (dinero, seguridad, identidad, legal), explica cada decisión en palabras simples y nunca se pasa del presupuesto. Nació para bodegas por WhatsApp, apps fintech y enjambres de agentes en Latinoamérica, donde cada centavo de IA cuenta.
 
-- La mayoría de los mensajes de una bodega no necesitan IA: saludos, preguntas frecuentes, "¿ya llegó mi recarga?", "recarga 10 al 5355…". Ruta los resuelve con reglas, a 0 créditos, y el dinero siempre pasa por confirmación.
+- La mayoría de los mensajes de una bodega no necesitan IA: saludos, preguntas frecuentes, "¿ya llegó mi recarga?", "recarga 10 al 5355…". Ruta los reconoce con reglas, a 0 créditos: contesta saludos y preguntas frecuentes, y entrega a tu código las consultas de saldo o estado y las recargas. Todo lo que mueve dinero se marca para confirmación.
 - Cuando sí hace falta un modelo, elige el de **menor costo esperado hasta una respuesta que sirva**, no el más barato por llamada.
 - El cliente solo ve el nivel ("Rápida", "Pro") y el porqué. Los nombres de modelos y proveedores quedan para el admin.
 
@@ -25,8 +25,8 @@ The thinking usually takes under 5 ms. A tiny model is consulted only when the c
 
 Routers exist. This combination doesn't:
 
-1. **The cheapest model is no model.** A zero-AI path for greetings, FAQs, status and balance lookups, and structured intents, with slot filling ("¿A qué número va la recarga?").
-2. **Risk beats complexity.** Money, auth and security, identity and KYC, and legal requests get a minimum tier and a confirmation gate. AI can draft money logic but never execute it.
+1. **The cheapest model is no model.** A zero-AI path for greetings, FAQs, status and balance lookups, and structured intents, with slot filling ("¿A qué número va la recarga?"). Only a message that is that one request takes it; anything more goes to a model.
+2. **Risk beats complexity.** Money, auth and security, identity and KYC, and legal requests get a minimum tier and are flagged for confirmation. Money requests come back with `aiMayExecute: false`: AI can draft money logic, your code executes it.
 3. **Expected cost to a usable answer.** `attempt + (1 − p) × (next tier + cost of a wrong answer)`. A cheap model that fails often loses to one that works the first time.
 4. **Cache-aware stickiness.** Staying on a warm model is priced in, so Ruta keeps a session where the provider already cached your project instead of re-reading it elsewhere.
 5. **Output and context diet.** Per-task output caps, short-channel caps for WhatsApp and SMS, and only the last four turns after a stable, cacheable prefix.
@@ -39,16 +39,18 @@ Routers exist. This combination doesn't:
 12. **Shadow mode.** Decide and log what Ruta would do beside what you do today, before you switch anything.
 13. **Learns your traffic.** Outcomes update success odds per task, model, language and difficulty.
 14. **Tamper-evident audit.** Each decision is hash-chained and stores hashes, not prompts.
-15. **PII stays home.** Phones, cards (Luhn-checked), emails and IBANs become tokens like `[PHONE_1]` before any untrusted provider sees them.
+15. **PII stays home.** Phones, cards (Luhn-checked), emails and IBANs become tokens like `[PHONE_1]`. `run()` sends the masked text to untrusted providers; if you call the provider yourself, send `d.masked.text` when it is present.
 
 ## Quick start
 
 ```bash
-npm install github:walak-dev/ruta
+npm install github:walak-dev/ruta#v0.2.0
 ```
 
+The repo ships a built `dist/`, so a git install needs no build step. No runtime dependencies.
+
 ```ts
-import { createRuta, catalogFromRows } from "@walak-dev/ruta";
+import { createRuta, catalogFromRows, toLogRecord } from "@walak-dev/ruta";
 
 const ruta = createRuta({
   catalog: catalogFromRows(myRoutes), // exact model ids + USD per 1M tokens
@@ -59,11 +61,16 @@ const ruta = createRuta({
 const d = await ruta.decide({ message, channel: "whatsapp", sessionId, budget: { remainingUsd } });
 
 switch (d.path) {
-  case "instant": reply(d.instant!.answer.es); break;        // 0 credits
+  case "instant":                                            // 0 credits
+    if (d.instant!.needsHandler) await yourHandler(d.instant!.kind, d.instant!.intent); // balance, status, top-up
+    else reply(d.instant!.answer.es);                        // greeting, thanks, FAQ
+    break;
   case "cache":   reply(d.cached!); break;                   // 0 credits
   case "refuse":  reply(d.explain.customer.es); break;       // plain reason
   case "model":   await callYourProvider(d.model!, d.maxOutputTokens); break;
 }
+// d.triage.risk === "money": a hint to route and confirm. Gate the money movement in your own code.
+log(toLogRecord(d));                                         // never log d itself: it can hold raw PII
 ruta.record(d, { ok: true, inTok, outTok, sessionId });      // this is how it learns
 ```
 
@@ -126,9 +133,25 @@ The built-in catalog is **illustrative** so the engine runs out of the box. Load
 | `customerWording` | `tier` | Customers never see vendor or model names |
 | `creditUsd` | 0.01 | Display unit for "créditos" |
 
+## Languages
+
+The rules for greetings, thanks, balance, status, top-up and money cover Spanish (es), English (en), Portuguese (pt), French (fr) and German (de). Haitian Creole (ht) has greetings and thanks only. The other risk classes (auth and security, identity and KYC, legal) still use mostly Spanish and English words: "ich habe mein Passwort vergessen" is not labelled `auth_security` yet. `detectLang` guesses the language from the message; when you already know the customer's language, pass it as `lang` and it always wins.
+
+## Limits
+
+- **The risk label is a routing hint, not a security control.** `risk: "money"`, `confirmRequired` and `aiMayExecute` choose a tier and tell your code what to do. Ruta moves no money and blocks nothing. Your own code must gate every money movement (confirmation, limits, authorization), whatever Ruta says.
+- **Instant answers for status, balance and top-up are intents, not results.** `answer` holds a placeholder sentence ("Consulto tu saldo.") and `needsHandler` is true. A deterministic handler of yours must look up the balance or order, or confirm and run the top-up. Greetings, thanks and FAQ answers are final.
+- **Never log a Decision whole.** `d.masked.map` holds the original emails, phones, cards and IBANs. Log `toLogRecord(d)`, which copies routing facts only.
+- **Success odds start as priors.** They get good only once your outcomes flow back through `record()`.
+- The rules are word lists and patterns, tuned on a development corpus. They will miss phrasings nobody wrote down; the measured numbers are in [docs/EVAL.md](docs/EVAL.md).
+
 ## Status
 
-v0.1: engine, adapters (OpenRouter and any OpenAI-compatible API, Anthropic, Bedrock, Hugging Face, Ollama), swarm budgets, MCP server, Claude skill, 21 tests. Rules are strongest in Spanish and English. Success odds start as priors and get good once your outcomes flow back through `record()`. Contributions welcome, especially intent rules for more countries and languages.
+v0.2: engine, adapters (OpenRouter and any OpenAI-compatible API, Anthropic, Bedrock, Hugging Face, Ollama), swarm budgets, MCP server, Claude skill, 84 tests, including a labelled corpus of 385 chat messages in five languages. CI runs lint, type-checks, rebuilds every committed artifact and runs the tests on Node 18, 20 and 22. What changed: [CHANGELOG.md](CHANGELOG.md).
+
+Measured on held-out phrases: see [docs/EVAL.md](docs/EVAL.md).
+
+Contributions welcome, especially intent rules for more countries and languages.
 
 ## License
 

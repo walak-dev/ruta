@@ -1,14 +1,22 @@
-import { isCodeTask } from "./classify.js";
-import { clamp, estTokens } from "./text.js";
+import { isCodeTask } from './classify.js';
+import { clamp, estTokens } from './text.js';
 /**
  * Stage 5, "select": the cheapest *expected cost to a usable answer*, not the cheapest call.
  *   E(model) = attempt + (1 - p) * (E(next tier up) + cost of a wrong answer)
  * A cheap model that fails often loses to a pricier one that works the first time.
  */
 const BASE_CAPABILITY = [0.35, 0.55, 0.8, 0.95, 0.97];
-const REASONING = new Set(["architecture", "plan", "analysis", "agent_orchestrate", "code_debug"]);
+const REASONING = new Set(['architecture', 'plan', 'analysis', 'agent_orchestrate', 'code_debug']);
 /** A wrong answer costs more on some tasks (broken app, rework, a person's time). */
-const FAIL_WEIGHT = { architecture: 6, code_feature: 4, agent_orchestrate: 4, code_debug: 3, plan: 3, write_long: 2, analysis: 2 };
+const FAIL_WEIGHT = {
+    architecture: 6,
+    code_feature: 4,
+    agent_orchestrate: 4,
+    code_debug: 3,
+    plan: 3,
+    write_long: 2,
+    analysis: 2,
+};
 export function tierCapability(rank) {
     return BASE_CAPABILITY[Math.max(0, Math.min(rank, BASE_CAPABILITY.length - 1))] ?? 0.5;
 }
@@ -19,9 +27,9 @@ export function priorSuccess(m, rank, t, images) {
         c += 0.1 * (s.code ?? 0);
     if (REASONING.has(t.task))
         c += 0.1 * (s.reasoning ?? 0);
-    if (t.lang !== "en" && t.lang !== "other")
+    if (t.lang !== 'en' && t.lang !== 'other')
         c += 0.08 * (s.spanish ?? 0);
-    if (t.task === "extract" || t.task === "classify")
+    if (t.task === 'extract' || t.task === 'classify')
         c += 0.08 * (s.json ?? 0);
     if (images > 0)
         c += 0.1 * (s.vision ?? 0);
@@ -66,7 +74,10 @@ export function select(inp) {
         if (policy.learning)
             p = posterior(p, store.getStats(statKey(t, m.id)));
         const c = {
-            model: m.id, provider: m.provider, tier: m.tier, rank: tier.rank,
+            model: m.id,
+            provider: m.provider,
+            tier: m.tier,
+            rank: tier.rank,
             pSuccess: p,
             attemptUsd: attemptUsd(m, inTok, expectedOut, cachedTok),
             reserveUsd: attemptUsd(m, t.reserveInputTokens, cap, 0),
@@ -74,26 +85,29 @@ export function select(inp) {
             eligible: true,
             cachedTokens: cachedTok,
         };
-        const no = (note) => { c.eligible = false; c.note = c.note ?? note; };
+        const no = (note) => {
+            c.eligible = false;
+            c.note = c.note ?? note;
+        };
         if (policy.allowTiers && !policy.allowTiers.includes(m.tier))
-            no("plan");
+            no('plan');
         if (policy.allowProviders && !policy.allowProviders.includes(m.provider))
-            no("provider");
+            no('provider');
         if (policy.blockModels?.includes(m.id))
-            no("blocked");
+            no('blocked');
         if (policy.offline && !m.local)
-            no("offline");
+            no('offline');
         if (images > 0 && !((m.strengths?.vision ?? 0) > 0))
-            no("no_vision");
+            no('no_vision');
         if (m.contextTokens && inTok + cap > m.contextTokens)
-            no("context");
+            no('context');
         const onPlan = c.eligible;
         if (minRisk !== undefined && tier.rank < minRisk)
-            no("risk_pin");
+            no('risk_pin');
         if (roleMin !== undefined && tier.rank < roleMin)
-            no("role_min");
+            no('role_min');
         if (roleMax !== undefined && tier.rank > roleMax)
-            no("role_max");
+            no('role_max');
         if (onPlan)
             planOk.push({ ...c, attemptUsd: attemptUsd(m, inTok, expectedOut, 0) });
         cands.push(c);
@@ -128,16 +142,23 @@ export function select(inp) {
         chosen = [...eligible].sort((a, b) => b.pSuccess - a.pSuccess || a.attemptUsd - b.attemptUsd)[0];
     const escalation = [];
     if (chosen) {
-        const higher = [...new Set(eligible.filter((c) => c.rank > chosen.rank).map((c) => c.rank))].sort((a, b) => a - b);
+        const chosenRank = chosen.rank;
+        const higher = [
+            ...new Set(eligible.filter((c) => c.rank > chosenRank).map((c) => c.rank)),
+        ].sort((a, b) => a - b);
         for (const r of higher.slice(0, policy.maxEscalations)) {
-            const best = eligible.filter((c) => c.rank === r).sort((a, b) => a.expectedUsd - b.expectedUsd)[0];
+            const best = eligible
+                .filter((c) => c.rank === r)
+                .sort((a, b) => a.expectedUsd - b.expectedUsd)[0];
             if (best)
                 escalation.push(best);
         }
     }
     // Baseline: what "always use the strongest model on the plan" would spend.
     const topRank = Math.max(-1, ...planOk.map((c) => c.rank));
-    const baseline = planOk.filter((c) => c.rank === topRank).sort((a, b) => b.pSuccess - a.pSuccess)[0];
+    const baseline = planOk
+        .filter((c) => c.rank === topRank)
+        .sort((a, b) => b.pSuccess - a.pSuccess)[0];
     const sticky = !!chosen && chosen.cachedTokens > 0;
     return { chosen, candidates: cands, escalation, sticky, baseline, floorMet, localFirst };
 }

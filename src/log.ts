@@ -1,4 +1,4 @@
-import type { Decision, Lang, Path, ReasonCode, RiskClass, TaskType } from "./types.js";
+import type { Decision, Lang, Path, ReasonCode, RiskClass, TaskType } from './types.js';
 
 /** What is safe to log about a decision: routing facts only, no text the person wrote. */
 export interface LogRecord {
@@ -14,7 +14,14 @@ export interface LogRecord {
   confirmRequired: boolean;
   aiMayExecute: boolean;
   maxOutputTokens: number;
-  estimate: { usd: number; reserveUsd: number; baselineUsd: number; savingsPct: number; credits: number; baselineCredits: number };
+  estimate: {
+    usd: number;
+    reserveUsd: number;
+    baselineUsd: number;
+    savingsPct: number;
+    credits: number;
+    baselineCredits: number;
+  };
   thinkMs: number;
   shadow: boolean;
   reasons: ReasonCode[];

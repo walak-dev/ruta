@@ -1,4 +1,4 @@
-import type { ModelSpec, Policy, TaskType, Tier } from "./types.js";
+import type { ModelSpec, Policy, TaskType, Tier } from './types.js';
 export declare const DEFAULT_TIERS: Tier[];
 export declare const INSTANT_LABEL: {
     es: string;

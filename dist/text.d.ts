@@ -1,4 +1,4 @@
-import type { Lang } from "./types.js";
+import type { Lang } from './types.js';
 /** Lowercase, strip accents, collapse spaces. All rules match against this. */
 export declare function norm(s: string): string;
 export declare function words(s: string): string[];

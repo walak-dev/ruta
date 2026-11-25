@@ -1,4 +1,4 @@
-import type { Adapter } from "../types.js";
+import type { Adapter } from '../types.js';
 type Sdk = {
     BedrockRuntimeClient: new (cfg: {
         region: string;

@@ -1,6 +1,11 @@
 /** Lowercase, strip accents, collapse spaces. All rules match against this. */
 export function norm(s) {
-    return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+    return s
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 export function words(s) {
     return norm(s).match(/[a-z0-9$']+/g) ?? [];
@@ -73,11 +78,11 @@ const NOT_LANGUAGE = [
  * Portuguese and French share ç ê â ô à ("você", "três", "être", "à").
  */
 const CHAR_HINTS = [
-    [["pt"], /[ãõ]/],
-    [["de"], /[ßäöü]/],
-    [["fr"], /[èùœ]/],
-    [["es"], /[ñ¿¡]/],
-    [["pt", "fr"], /[çêâôà]/],
+    [['pt'], /[ãõ]/],
+    [['de'], /[ßäöü]/],
+    [['fr'], /[èùœ]/],
+    [['es'], /[ñ¿¡]/],
+    [['pt', 'fr'], /[çêâôà]/],
 ];
 /** The start of a message is enough to tell its language, and it bounds the work on very long input. */
 const VOTE_CHARS = 2000;
@@ -92,26 +97,34 @@ const HINT_POINTS = 1;
  * contractions (don't, I'm; not 's, which German shares: "wie geht's").
  * A tie or no signal returns the fallback (the tenant's language).
  */
-export function detectLang(s, fallback = "es") {
+export function detectLang(s, fallback = 'es') {
     let clean = s.length > VOTE_CHARS ? s.slice(0, VOTE_CHARS) : s;
     for (const re of NOT_LANGUAGE)
-        clean = clean.replace(re, " ");
-    const raw = clean.normalize("NFC").toLowerCase().replace(/[\u2019\u02bc`\u00b4]/g, "'");
+        clean = clean.replace(re, ' ');
+    const raw = clean
+        .normalize('NFC')
+        .toLowerCase()
+        .replace(/[\u2019\u02bc`\u00b4]/g, "'");
     const score = new Map();
-    const add = (lang, points) => { if (points > 0)
-        score.set(lang, (score.get(lang) ?? 0) + points); };
+    const add = (lang, points) => {
+        if (points > 0)
+            score.set(lang, (score.get(lang) ?? 0) + points);
+    };
     // Spanish is the only one that writes "güe" and "güi"; any other "ü" reads as German.
     const hinted = new Set();
-    const letters = raw.replace(/gü(?=[ei])/g, () => { hinted.add("es"); return "gu"; });
+    const letters = raw.replace(/gü(?=[ei])/g, () => {
+        hinted.add('es');
+        return 'gu';
+    });
     for (const [langs, re] of CHAR_HINTS)
         if (re.test(letters))
             for (const lang of langs)
                 hinted.add(lang);
     for (const lang of hinted)
         add(lang, HINT_POINTS);
-    add("fr", WORD_POINTS * (raw.match(/(?:^|[^a-z])(?:qu|[cdjlmnst])'(?=[a-zàâéèêîôûh])/g)?.length ?? 0));
-    add("en", WORD_POINTS * (raw.match(/(?:n't|[a-z]'(?:re|ll|ve|m|d))(?![a-z'])/g)?.length ?? 0));
-    const tokens = norm(raw.replace(/ß/g, "ss").replace(/œ/g, "oe").replace(/æ/g, "ae")).match(/[a-z]+/g) ?? [];
+    add('fr', WORD_POINTS * (raw.match(/(?:^|[^a-z])(?:qu|[cdjlmnst])'(?=[a-zàâéèêîôûh])/g)?.length ?? 0));
+    add('en', WORD_POINTS * (raw.match(/(?:n't|[a-z]'(?:re|ll|ve|m|d))(?![a-z'])/g)?.length ?? 0));
+    const tokens = norm(raw.replace(/ß/g, 'ss').replace(/œ/g, 'oe').replace(/æ/g, 'ae')).match(/[a-z]+/g) ?? [];
     for (const t of tokens)
         for (const lang of VOTES.get(t) ?? [])
             add(lang, WORD_POINTS);
@@ -133,7 +146,15 @@ export function detectLang(s, fallback = "es") {
  * Starting guesses for characters per token. Ruta replaces them with ratios measured
  * from real provider usage per (model, language): the "language tax" is measured, not assumed.
  */
-export const CHARS_PER_TOKEN = { en: 4, es: 3.6, pt: 3.6, fr: 3.6, de: 3.4, ht: 3.4, other: 3 };
+export const CHARS_PER_TOKEN = {
+    en: 4,
+    es: 3.6,
+    pt: 3.6,
+    fr: 3.6,
+    de: 3.4,
+    ht: 3.4,
+    other: 3,
+};
 export function estTokens(chars, lang, measured) {
     const r = measured && measured > 0.5 ? measured : CHARS_PER_TOKEN[lang];
     return Math.ceil(chars / r);
@@ -177,34 +198,39 @@ export function maskPII(input) {
         kinds.add(kind);
         return token;
     };
-    let text = input.replace(EMAIL, (m) => put("EMAIL", m));
-    text = text.replace(IBAN, (m) => put("IBAN", m));
+    let text = input.replace(EMAIL, (m) => put('EMAIL', m));
+    text = text.replace(IBAN, (m) => put('IBAN', m));
     text = text.replace(DIGITS, (m, offset, whole) => {
         const trimmed = m.trim();
         if (DATE.test(trimmed))
             return m;
         const parts = trimmed.split(/\s+/);
-        const first = parts[0] ?? "";
+        const first = parts[0] ?? '';
         // "recarga 10 5355551234": the short first group is an amount, not part of the phone.
-        if (!trimmed.startsWith("+") && parts.length > 1 && first.replace(/\D/g, "").length <= 3 &&
-            trimmed.slice(first.length).replace(/\D/g, "").length >= 7 && AMOUNT_LEAD.test(whole.slice(Math.max(0, offset - 25), offset))) {
-            return `${first} ${put("PHONE", trimmed.slice(first.length).trim())}`;
+        if (!trimmed.startsWith('+') &&
+            parts.length > 1 &&
+            first.replace(/\D/g, '').length <= 3 &&
+            trimmed.slice(first.length).replace(/\D/g, '').length >= 7 &&
+            AMOUNT_LEAD.test(whole.slice(Math.max(0, offset - 25), offset))) {
+            return `${first} ${put('PHONE', trimmed.slice(first.length).trim())}`;
         }
         // "aufladen 0160 5550199 15€": a short last group right before a currency is an amount, not part of the phone.
-        const last = parts[parts.length - 1] ?? "";
+        const last = parts[parts.length - 1] ?? '';
         const head = trimmed.slice(0, trimmed.length - last.length).trim();
         // So is a group of up to 3 digits after a complete compact number: "recarga 5355551234 10".
         const compact = parts.length === 2 && /^\+?\d{8,}$/.test(first) && /^\d{1,3}$/.test(last);
-        if (parts.length > 1 && /^\d{1,4}$/.test(last) && (compact || AMOUNT_TRAIL.test(whole.slice(offset + m.length, offset + m.length + 12)))) {
-            const hd = head.replace(/\D/g, "");
+        if (parts.length > 1 &&
+            /^\d{1,4}$/.test(last) &&
+            (compact || AMOUNT_TRAIL.test(whole.slice(offset + m.length, offset + m.length + 12)))) {
+            const hd = head.replace(/\D/g, '');
             if (hd.length >= 7 && hd.length <= 15)
-                return `${put("PHONE", head)} ${last}`;
+                return `${put('PHONE', head)} ${last}`;
         }
-        const d = trimmed.replace(/\D/g, "");
+        const d = trimmed.replace(/\D/g, '');
         if (d.length >= 13 && d.length <= 19 && luhn(d))
-            return put("CARD", trimmed);
+            return put('CARD', trimmed);
         if (d.length >= 7 && d.length <= 15)
-            return put("PHONE", trimmed);
+            return put('PHONE', trimmed);
         return m;
     });
     return { text, map, kinds: [...kinds] };
@@ -216,7 +242,7 @@ export function unmask(text, map) {
     return out;
 }
 export function tailDigits(value, n = 4) {
-    return value.replace(/\D/g, "").slice(-n);
+    return value.replace(/\D/g, '').slice(-n);
 }
 export function clamp(x, lo = 0, hi = 1) {
     return Math.min(hi, Math.max(lo, x));

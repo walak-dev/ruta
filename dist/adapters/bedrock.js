@@ -7,7 +7,7 @@ export function bedrock(o) {
     const load = () => {
         if (!ready) {
             ready = (async () => {
-                const name = "@aws-sdk/client-bedrock-runtime";
+                const name = '@aws-sdk/client-bedrock-runtime';
                 const sdk = o.sdk ?? (await import(name));
                 return { sdk, client: new sdk.BedrockRuntimeClient({ region: o.region }) };
             })();
@@ -18,17 +18,21 @@ export function bedrock(o) {
         const { sdk, client } = await load();
         const cmd = new sdk.ConverseCommand({
             modelId: c.model,
-            messages: c.messages.filter((m) => m.role !== "system").map((m) => ({ role: m.role, content: [{ text: m.content }] })),
+            messages: c.messages
+                .filter((m) => m.role !== 'system')
+                .map((m) => ({ role: m.role, content: [{ text: m.content }] })),
             ...(c.system ? { system: [{ text: c.system }] } : {}),
             inferenceConfig: { maxTokens: c.maxOutputTokens },
         });
         const out = (await client.send(cmd));
-        const text = (out.output?.message?.content ?? []).map((b) => b.text ?? "").join("");
+        const text = (out.output?.message?.content ?? []).map((b) => b.text ?? '').join('');
         return {
             text,
             ...(out.usage?.inputTokens != null ? { inTok: out.usage.inputTokens } : {}),
             ...(out.usage?.outputTokens != null ? { outTok: out.usage.outputTokens } : {}),
-            ...(out.usage?.cacheReadInputTokens != null ? { cachedTok: out.usage.cacheReadInputTokens } : {}),
+            ...(out.usage?.cacheReadInputTokens != null
+                ? { cachedTok: out.usage.cacheReadInputTokens }
+                : {}),
         };
     };
 }

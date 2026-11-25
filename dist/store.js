@@ -31,7 +31,9 @@ export function memoryStore(opts = {}) {
                 cache.delete(first);
             }
         },
-        getStats(k) { return stats.get(k) ?? { s: 0, f: 0 }; },
+        getStats(k) {
+            return stats.get(k) ?? { s: 0, f: 0 };
+        },
         addStat(k, ok) {
             const st = stats.get(k) ?? { s: 0, f: 0 };
             if (ok)
@@ -50,9 +52,17 @@ export function memoryStore(opts = {}) {
             r.tokens += tokens;
             ratios.set(k, r);
         },
-        getSession(id) { return sessions.get(id); },
-        setSession(id, s) { sessions.set(id, s); },
-        lastHash() { return last; },
-        setLastHash(h) { last = h; },
+        getSession(id) {
+            return sessions.get(id);
+        },
+        setSession(id, s) {
+            sessions.set(id, s);
+        },
+        lastHash() {
+            return last;
+        },
+        setLastHash(h) {
+            last = h;
+        },
     };
 }

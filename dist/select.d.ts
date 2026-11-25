@@ -1,4 +1,4 @@
-import type { Candidate, ModelSpec, Policy, RouteRequest, SessionState, Store, Triage } from "./types.js";
+import type { Candidate, ModelSpec, Policy, RouteRequest, SessionState, Store, Triage } from './types.js';
 export declare function tierCapability(rank: number): number;
 export declare function priorSuccess(m: ModelSpec, rank: number, t: Triage, images: number): number;
 export declare function statKey(t: Triage, model: string): string;
